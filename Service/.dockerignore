@@ -1,0 +1,3 @@
+venv_service/
+__pycache__/
+*.pyc
