@@ -1,0 +1,38 @@
+services:
+ # Database
+  mio_mongo:
+    image: mongo:latest
+    container_name: mio_mongo
+    ports:
+      - "27018:27017" 
+    networks:
+      - rete_comune
+
+  # Service
+  servizio_consumi:
+    image: gcrta29/servizio:v1 
+    container_name: servizio_consumi
+    ports:
+      - "5001:5000"
+    environment:
+      - MONGO_URI=mongodb://mio_mongo:27017/
+    depends_on:
+      - mio_mongo
+    networks:
+      - rete_comune
+
+ # Digital Replica
+  digital_replica_app:
+    image: gcrta29/digital_replica:v4   
+    container_name: digital_replica
+    ports:
+      - "5000:5000"
+   
+    depends_on:
+      - mio_mongo
+    networks:
+      - rete_comune
+
+networks:
+  rete_comune:
+    name: rete_comune_progetto
