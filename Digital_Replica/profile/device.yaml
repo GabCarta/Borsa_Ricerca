@@ -19,7 +19,7 @@ collections:
       - 'ON'
       - 'OFF'
       temperatura: float
-    db_collection_name: DR_Condizionatore
+    db_collection_name: Condizionatore
     required_fields:
       id: string
   Luce:
@@ -30,11 +30,11 @@ collections:
     - ligh_liv
     allowed_values:
       consumo: float
-      "intensit\xE0_luminosa": float
+      intensita_luminosa: float
       stato:
       - 'ON'
       - 'OFF'
-    db_collection_name: DR_Luce
+    db_collection_name: Luce
     required_fields:
       id: string
 database:

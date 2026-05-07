@@ -10,12 +10,10 @@ services:
 
   # Service
   servizio_consumi:
-    image: gcrta29/servizio:v1 
+    image: gcrta29/servizio:v1
     container_name: servizio_consumi
     ports:
-      - "5001:5000"
-    environment:
-      - MONGO_URI=mongodb://mio_mongo:27017/
+      - "5001:5001"
     depends_on:
       - mio_mongo
     networks:
@@ -23,10 +21,12 @@ services:
 
  # Digital Replica
   digital_replica_app:
-    image: gcrta29/digital_replica:v4   
+    image: gcrta29/digital_replica:v1
     container_name: digital_replica
     ports:
       - "5000:5000"
+    volumes:
+    - "C:/Users/Carta/Desktop/Borsa di ricerca/Digital_Replica/profile:/app/profile"
    
     depends_on:
       - mio_mongo

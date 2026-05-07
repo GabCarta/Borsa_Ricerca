@@ -10,6 +10,7 @@ from resources.data_mqtt import set_data
 from resources.data_http import get_data
 import security
 from services.profile_service import maintenance_profile 
+from  read_parameter import read_parameter
 
 
 
@@ -21,7 +22,7 @@ app.add_url_rule('/api/setData', view_func=set_data, methods=['POST'])
 app.add_url_rule('/api/getData', view_func=get_data, methods=['GET'])
 app.add_url_rule('/api/generate_keys', view_func=security.create_key, methods=['GET'])
 app.add_url_rule('/api/service_pf', view_func=maintenance_profile, methods=['GET','POST'])
-
+app.add_url_rule('/api/read_parameter', view_func=read_parameter, methods=['GET'])
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

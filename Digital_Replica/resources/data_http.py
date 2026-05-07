@@ -211,4 +211,3 @@ def get_data():
             return jsonify({"Stato": f"Errore MQTT: {e}"}), 500
     else:
         return jsonify({"Stato": "Errore: mode non riconosciuto"}), 400
-
