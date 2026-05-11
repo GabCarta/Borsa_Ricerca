@@ -26,7 +26,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-    - "C:/Users/Carta/Desktop/Borsa di ricerca/Digital_Replica/profile:/app/profile"
+    - "../Digital_Replica/profile:/app/profile"
    
     depends_on:
       - mio_mongo
