@@ -7,21 +7,6 @@ brokers:
     port: 1883
     topic_subscribe: device_carta
 collections:
-  Condizionatore:
-    allowed_id:
-    - cond_kit
-    - cond_bed
-    - cond_bath
-    - cond_liv
-    allowed_values:
-      consumo: float
-      stato:
-      - 'ON'
-      - 'OFF'
-      temperatura: float
-    db_collection_name: Condizionatore
-    required_fields:
-      id: string
   Luce:
     allowed_id:
     - ligh_kit
@@ -30,16 +15,12 @@ collections:
     - ligh_liv
     allowed_values:
       consumo: float
-      intensita_luminosa: float
+      "intensit\xE0_luminosa": float
       stato:
       - 'ON'
       - 'OFF'
     db_collection_name: Luce
     required_fields:
       id: string
-database:
-  dbname: DR_generico
-  driver: mongodb
-  host: mio_mongo
-  port: 27017
+database: null
 id: Smartphone01

@@ -1,0 +1,3 @@
+Microsoft VS Code/
+__pycache__/
+Postman_collection
