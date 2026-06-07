@@ -21,7 +21,8 @@ Il progetto è suddiviso in moduli indipendenti, ognuno con un compito specifico
 
 * **Linguaggio:** Python 3 (Flask, PyMongo, PyYAML)
 * **Containerizzazione & Orchestrazione:** Docker & Docker Compose
-* **Database:** MongoDB 
+* **Database:** MongoDB
+*  **Software:** PostMan
 * **Protocolli di Comunicazione:** HTTP/REST (per la registrazione) e MQTT (per lo scambio dati in tempo reale)
 
 ---
@@ -33,4 +34,14 @@ Il progetto segue le best-practice moderne dei microservizi :
 3.  **Isolamento:** Ogni Digital Replica (Luce, Condizionatore) gira in un ambiente isolato ma comunica in modo trasparente all'interno della rete virtuale di Docker.
 
 ---
+
+## Come Testare l'Architettura
+Per poter testare la seguente architettura bisogna seguire i seguenti passi:
+1. Scaricare l'intera cartella,
+2. Installare le eventuali librerie mancanti,
+3. Procedere con la creazione dei container, mediante l'utilizzo di un terminale,
+4. Necessario  disporre di MongoDB Compass e di Postman, dove tramite MongoDB Compass andremo a stabilire la connessione al database,
+5. Il database di prova è stato chiamato **DR_generico**, mentre l' URI da inserire per connetterci al database è il seguente **`mongodb://localhost:27018/`**
+6. I file  **`Condizionatore.postman_collection.json`** & **`Luce.postman_collection.json`** contengono le chiamate alle varie API già compilate con i parametri che devono necessariamente essere utilizzati per testare le chiamate.
+
 </div>
