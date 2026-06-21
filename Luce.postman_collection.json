@@ -1,0 +1,217 @@
+{
+  "info": {
+    "_postman_id": "d0bd7896-af46-43c5-94ad-e21b9fcebe8b",
+    "name": "Luce",
+    "description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "49569318",
+    "_collection_link": "https://go.postman.co/collection/49569318-d0bd7896-af46-43c5-94ad-e21b9fcebe8b?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "setData Luce",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n\"sender_id\": \"Smartphone01\",\r\n\"security_key\": \"cTN3T_Ud_WW_nSFBjbWGRaUJPXjQGK47eR99fVSu5FU=\",\r\n\"id\": \"cond_bed\",\r\n\"temperatura\": 25,\r\n\"stato\": \"ON\",\r\n\"consumo\": 3\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5002/api/setData",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5002",
+          "path": [
+            "api",
+            "setData"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "getData Luce",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:5002/api/getData?id=light_kit&collection=Luce&mode=history&sender_id=Smartphone01",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5002",
+          "path": [
+            "api",
+            "getData"
+          ],
+          "query": [
+            {
+              "key": "id",
+              "value": "light_kit"
+            },
+            {
+              "key": "collection",
+              "value": "Luce"
+            },
+            {
+              "key": "mode",
+              "value": "history"
+            },
+            {
+              "key": "sender_id",
+              "value": "Smartphone01"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "registration Luce",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"database\": {\r\n        \"driver\": \"mongodb\",\r\n        \"host\": \"localhost\",      \r\n        \"port\": 27017,            \r\n        \"dbname\": \"DR_generico\"\r\n    },\r\n     \"Profile\": {\r\n        \"id\": \"Smartphone02\",\r\n        \"OS\": \"Android\"\r\n    },\r\n    \r\n    \"collections\": {\r\n        \"Luce\":{\r\n            \"db_collection_name\": \"Luce\",\r\n            \"required_fields\":{\"id\": \"string\"},\r\n            \"allowed_id\":[\"ligh_kit\",\"ligh_bed\",\"ligh_bath\",\"ligh_liv\"],\r\n            \"allowed_values\":{\"stato\": [\"ON\",\"OFF\"],\r\n                \"intensità_luminosa\": \"float\",\r\n                \"consumo\": \"float\"}\r\n        }\r\n        },\r\n\r\n    \"brokers\": {\r\n        \"mqtt\": {\r\n            \"broker_address\": \"broker.mqttdashboard.com\",\r\n            \"port\": 1883,\r\n            \"topic_subscribe\": \"device_carta\"\r\n        }\r\n    }\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5002/api/registration",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5002",
+          "path": [
+            "api",
+            "registration"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "service Luce",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"database\": {\r\n        \"driver\": \"mongodb\",\r\n        \"host\": \"localhost\",\r\n        \"port\": 27017,\r\n        \"dbname\": \"DR_generico\"\r\n    },\r\n   \r\n    \"Profile\": {\r\n        \"id\": \"Smartphone02\",\r\n        \"OS\": \"Android\"\r\n    },\r\n    \"collections\": {\r\n        \"Condizionatore\": {\r\n            \"db_collection_name\": \"DR_Condizionatore\",\r\n            \"required_fields\": { \"id\": \"string\" },\r\n            \"allowed_id\": [\"cond_kit\", \"cond_bath\", \"cond_liv\", \"cond_bed\"],\r\n            \"allowed_values\": { \"stato\": [\"ON\", \"OFF\"], \"temperatura\": \"float\" }\r\n        }\r\n    },\r\n    \"brokers\": {\r\n        \"mqtt\": {\r\n            \"broker_address\": \"broker.mqttdashboard.com\",\r\n            \"port\": 1883,\r\n            \"topic_subscribe\": \"device_carta\"\r\n        }\r\n    }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5002/api/service_pf",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5002",
+          "path": [
+            "api",
+            "service_pf"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "sendData Luce",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"sender_id\": \"Smartphone01\",\r\n  \"security_key\": \"cTN3T_Ud_WW_nSFBjbWGRaUJPXjQGK47eR99fVSu5FU=\",\r\n  \"id\": \"ligh_kit\",\r\n  \"stato\": \"ON\",\r\n  \"intensità_luminosa\": 50,\r\n  \"consumo\": 1.5\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://127.0.0.1:5002/api/sendData",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5002",
+          "path": [
+            "api",
+            "sendData"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "check_consumo",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:5000/api/check_consumo?id=cond_bed&collection=Condizionatore",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "check_consumo"
+          ],
+          "query": [
+            {
+              "key": "id",
+              "value": "cond_bed",
+              "type": "text"
+            },
+            {
+              "key": "collection",
+              "value": "Condizionatore",
+              "type": "text"
+            }
+          ]
+        },
+        "description": "Servizio per monitorare i consumi \r\n"
+      },
+      "response": []
+    }
+  ]
+}
