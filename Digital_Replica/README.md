@@ -44,7 +44,7 @@ digital_replica/
 * <kbd>profiles/device.json</kbd>: contiene le informazioni minime persistenti legate al dispositivo e la chiave salvata lato server, usate per riconoscere e autorizzare le richieste.
 
 # Test
-Per andare a testare questo progetto viene utilizzato POSTMAN, con il quale andiamo ad effettuare le varie app.route presenti nel progetto. La porta dedicata all'avvio del server è la porta 5000 e  quindi le varie chiamate, da utilizzare su Postman sono le seguenti:
+Per andare a testare questo progetto viene utilizzata un'interfaccia grafica creata mediante l'utilizzo di **Streamlit** , con il quale andiamo ad effettuare le varie app.route presenti nel progetto. La porta dedicata all'avvio del server è la porta 5000 e  quindi le varie chiamate, da utilizzare nella nostra dashboard sono le seguenti:
 * <kbd>http://127.0.0.1:5000/api/registration</kbd> : all'interno del registration viene passato tutto il file di configurazione, sul quale andrà a creare le varie digital repliche all'interlo del database. Un esempio può essere il seguente:
  ```json
  {
