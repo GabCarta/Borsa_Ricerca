@@ -6,13 +6,16 @@ Questo modulo contiene i servizi  dell'architettura Digital Twin. A differenza d
 
 ---
 
-##  Componenti Principali
+# Componenti Principali
 
-* **`check_consumi_ind.py`**: È il core del servizio di monitoraggio energetico. Lo script analizza in tempo reale i dati di telemetria inviati dalle Digital Replica (sia tramite chiamate HTTP che messaggi MQTT). Il suo compito principale è verificare che il consumo energetico della replica (es. condizionatore o luce) non superi una determinata soglia di sicurezza prestabilita.
-
----
-
-##  Funzionamento
+```text
+Service/ 
+├── app.py                  # Avvio del server Flask per il servizio
+├── check_consumi_ind.py    # Script che calcola l'assorbimento energetico dei dispositivi accesi; superata la soglia, aggiorna il comando salvando lo spegnimento nel DB
+├── Dockerfile              # Istruzioni per la containerizzazione del microservizio 
+└── requirements.txt        # Elenco delle dipendenze e librerie Python necessarie
+```
+#  Funzionamento
 
 Il flusso logico eseguito dal servizio si articola nei seguenti punti:
 
@@ -23,7 +26,7 @@ Il flusso logico eseguito dal servizio si articola nei seguenti punti:
 
 ---
 
-##  Integrazione e Connessione
+#  Integrazione e Connessione
 
 Questo modulo è il linea con le caratteristiche di un sistema a microservizio:
 * Il servizio è completamente containerizzato ed è orchestrato tramite il file centrale di Docker Compose.
