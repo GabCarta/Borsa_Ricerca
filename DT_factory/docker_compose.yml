@@ -1,0 +1,54 @@
+services:
+ # Database
+  mio_mongo:
+    image: mongo:8.0
+    container_name: mio_mongo
+    ports:
+      - "27018:27017" 
+    networks:
+      - rete_comune
+
+
+  # Service
+  servizio_consumi:
+    image: gcrta29/service:v1
+    container_name: servizio_consumi
+    ports:
+      - "5001:5001"
+    depends_on:
+      - mio_mongo
+    environment:
+      - DATABASE_URL=mongodb://mio_mongo:27017/DR_generico
+    networks:
+      - rete_comune
+
+ # Digital Replica
+  digital_replica:
+    image: gcrta29/digital_replica:v1
+    container_name: digital_replica
+    ports:
+      - "5000:5000"
+    volumes:
+    - "../Digital_Replica/profile:/app/profile"
+   
+    depends_on:
+      - mio_mongo
+    environment:
+      - DATABASE_URL=mongodb://mio_mongo:27017/DR_generico
+    networks:
+      - rete_comune
+
+  dashboard:
+      image: gcrta29/dashboard:v1
+      container_name: dashboard
+      ports:
+        - "8501:8501"
+      depends_on:
+        - digital_replica
+        - servizio_consumi
+      networks:
+        - rete_comune
+
+networks:
+  rete_comune:
+    name: rete_comune_progetto
