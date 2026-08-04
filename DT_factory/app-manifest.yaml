@@ -1,0 +1,177 @@
+#database
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mio-mongo
+spec:
+  selector:
+    matchLabels:
+      app: mio-mongo
+  template:
+    metadata:
+      labels:
+        app: mio-mongo
+    spec:
+      containers:
+      - name: mongo
+        image: mongo:8.0
+        ports:
+        - containerPort: 27017
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mio-mongo
+spec:
+  selector:
+    app: mio-mongo
+  ports:
+  - port: 27017
+    targetPort: 27017
+    nodePort: 27018 # Espone la porta 27018 sulla macchina host (come in compose)
+  type: NodePort
+
+---
+#Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: servizio-consumi
+spec:
+  selector:
+    matchLabels:
+      app: servizio-consumi
+  template:
+    metadata:
+      labels:
+        app: servizio-consumi
+    spec:
+      containers:
+      - name: servizio-consumi
+        image: gcrta29/service:v1 
+        ports:
+        - containerPort: 5001
+        env:
+        # 
+        - name: DATABASE_URL
+          value: "mongodb://mio-mongo:27017/DB_generico"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: servizio-consumi
+spec:
+  selector:
+    app: servizio-consumi
+  ports:
+  - port: 5001
+
+---
+# Digital Replica
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: digital-replica
+spec:
+  selector:
+    matchLabels:
+      app: digital-replica
+  template:
+    metadata:
+      labels:
+        app: digital-replica
+    spec:
+      containers:
+      - name: digital-replica
+        image: gcrta29/digital_replica:v1
+        ports:
+        - containerPort: 5000
+        env:
+        - name: DATABASE_URL
+          value: "mongodb://mio-mongo:27017/DB_generico"
+        volumeMounts:
+        - name: profile-data
+          mountPath: /app/profile
+      volumes:
+      - name: profile-data
+        hostPath:
+         
+          path: /percorso/assoluto/verso/Digital_Replica/profile
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: digital-replica
+spec:
+  selector:
+    app: digital-replica
+  ports:
+  - port: 5000
+
+---
+#authentication
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentication
+spec:
+  selector:
+    matchLabels:
+      app: authentication
+  template:
+    metadata:
+      labels:
+        app: authentication
+    spec:
+      containers:
+      - name: authentication
+        image: gcrta29/authentication:v1
+        ports:
+        - containerPort: 5005
+        env:
+        - name: DATABASE_URL
+          value: "mongodb://mio-mongo:27017/DB_generico"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authentication
+spec:
+  selector:
+    app: authentication
+  ports:
+  - port: 5005
+
+---
+#dashboard
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard
+spec:
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: gcrta29/dashboard:v1
+        ports:
+        - containerPort: 8501
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard
+spec:
+  selector:
+    app: dashboard
+  ports:
+  - port: 8501
+    targetPort: 8501
+  type: LoadBalancer 
