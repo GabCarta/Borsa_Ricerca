@@ -18,7 +18,7 @@ services:
     depends_on:
       - mio_mongo
     environment:
-      - DATABASE_URL=mongodb://mio_mongo:27017/DR_generico
+      - DATABASE_URL=mongodb://mio_mongo:27017/DB_generico
     networks:
       - rete_comune
 
@@ -34,7 +34,19 @@ services:
     depends_on:
       - mio_mongo
     environment:
-      - DATABASE_URL=mongodb://mio_mongo:27017/DR_generico
+      - DATABASE_URL=mongodb://mio_mongo:27017/DB_generico
+    networks:
+      - rete_comune
+
+  authentication:
+    image: gcrta29/authentication:v1
+    container_name: authentication
+    ports:
+      - "5005:5005"
+    depends_on:
+      - mio_mongo
+    environment:
+      - DATABASE_URL=mongodb://mio_mongo:27017/DB_generico
     networks:
       - rete_comune
 
@@ -46,6 +58,7 @@ services:
       depends_on:
         - digital_replica
         - servizio_consumi
+        - authentication
       networks:
         - rete_comune
 
