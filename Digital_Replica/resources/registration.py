@@ -12,28 +12,47 @@ from database import db_instance
 import security
 
 app = Flask(__name__)
-
 @app.route('/api/registration', methods=['POST'])
 def registration_pf():
-    #  Lettura dei dati ricevuti
+    # lettura del JSON inviato dal dispositivo
     received_config = request.get_json()
     
     if not received_config:
-        return jsonify({"Stato": "Errore: Nessun dato ricevuto"}), 400
+        return jsonify({"State": "Error, no data received"}), 400
 
-    #  Generazione della chiave segreta
+    # Extract & Validate required fields
+    profile_data = received_config.get("Profile")
+    collections_data = received_config.get("collections")
+    brokers_data = received_config.get("brokers")
+    db_data = received_config.get("database")
+
+    # se i dati richiesti non sono presenti, restituiamo un errore
+    if not profile_data or not collections_data or not db_data:
+        return jsonify({
+            "State": "Error: Incomplete payload",
+            "Details": "Profilo, collezioni e configurazione database sono obbligatori per la registrazione."
+        }), 400
+
+    # Normalizzazione chiavi database (assicura che ci sia sia dbname che db_name se serve)
+    if isinstance(db_data, dict):
+        if 'dbname' in db_data and 'db_name' not in db_data:
+            db_data['db_name'] = db_data['dbname']
+        elif 'db_name' in db_data and 'dbname' not in db_data:
+            db_data['dbname'] = db_data['db_name']
+
+    # generazione della chiave di sicurezza per il dispositivo
     security_key = security.create_key()
-    print(f"Chiave privata generata: {security_key}")
+    print(f"Private key generated: {security_key}")
 
-    # Estrazione dati per la creazione dei file
-    device_id = received_config.get("Profile", {}).get("id")
+    device_id = profile_data.get("id")
     
+    # Costruzione dell'oggetto profile completo
     profile = {
         "id": device_id,
-        "Profile": received_config.get("Profile"),
-        "database": received_config.get("database"),
-        "collections": received_config.get("collections"),
-        "brokers": received_config.get("brokers")
+        "Profile": profile_data,
+        "database": db_data,
+        "collections": collections_data,
+        "brokers": brokers_data
     }
     
     device = {
@@ -43,7 +62,7 @@ def registration_pf():
         }
     }
 
-     # Configurazione dei percorsi per il salvataggio dei file
+    # Configurazione dei percorsi per il salvataggio dei file
     current_dir = os.path.dirname(os.path.abspath(__file__))
     root_dir = os.path.dirname(current_dir)
     target_path = os.path.join(root_dir, 'profile')
@@ -53,17 +72,16 @@ def registration_pf():
     # Verifica della connessione al database
     db, _ = db_instance.get_connection(received_config)
     if db is None:
-        return jsonify({"Stato": "Errore DB: Impossibile connettersi a mio_mongo"}), 500
+        return jsonify({"State": "Error DB: Unable to connect to database"}), 500
 
-    # Esecuzione delle operazioni di scrittura e aggiornamento
+    # 3. Esecuzione delle operazioni di scrittura
     try:
-        # Creazione della cartella 'profile' se non esiste
         if not os.path.exists(target_path):
             os.makedirs(target_path)
 
-        # Scrittura sul file device.yaml
+        # Scrittura sul file device.yaml (con sort_keys=False per preservare la struttura)
         with open(file_path_yaml, 'w') as f_yaml:
-            yaml.dump(profile, f_yaml)
+            yaml.dump(profile, f_yaml, sort_keys=False)
             
         # Scrittura sul file device.json
         with open(file_path_json, 'w') as f_json:
@@ -72,11 +90,10 @@ def registration_pf():
         # Aggiunta / aggiornamento sul database
         db_instance.update_config_and_create(received_config, security_key.strip())
 
-        # Restituiamo la chiave segreta
         return jsonify({
-            "Stato": "Registrazione dispositivo avvenuta con successo",
-            "chiave": security_key
+            "State": "Success: Device registration completed successfully",
+            "key": security_key
         }), 200
 
     except Exception as e:
-        return jsonify({"Stato": f"Errore durante registrazione dispositivo: {e}"}), 500
+        return jsonify({"State": f"Error during device registration: {str(e)}"}), 500

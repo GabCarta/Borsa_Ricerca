@@ -26,7 +26,7 @@ class DB_connection:
         env_url = os.environ.get("DATABASE_URL")
 
         if not env_url:
-            print("Stato: ERRORE CRITICO - Impossibile stabilire connessione al database.")
+            print("State: Error: Impossible to find DATABASE_URL environment variable")
             return None, None
 
         #  Tentativo di connessione
@@ -40,11 +40,11 @@ class DB_connection:
             self.db = client.get_database()
             self.db.command("ping")
 
-            print("Stato: Connessione al DB avvenuta con successo tramite Docker ENV")
+            print("State: Connection to DB successful via Docker ENV")
             return self.db, self.config
 
         except Exception as e:
-            print(f"Stato: Errore fatale durante la connessione al DB (ENV): {e}")
+            print(f"State: Error during DB connection (ENV): {e}")
             return None, None
         
     # funzione utilizzata per creare/aggiornare il profilo
@@ -70,20 +70,20 @@ class DB_connection:
                         {"id": device_id}, {"$set": dati_device}, upsert=True
                     )
                     print(
-                        f"Stato: Profilo dispositivo con ID {device_id} salvato/aggiornato in DB"
+                        f"State: Device profile with ID {device_id} saved/updated in DB"
                     )
                 else:
                     print(
-                        "Stato: ID dispositivo non presente, impossibile salvare profilo in DB"
+                        "State: Device ID not present, impossible to save profile in DB"
                     )
             except Exception as e:
                 print(
-                    f"Stato: Errore durante salvataggio profilo dispositivo in DB: {e}"
+                    f"State: Error while saving device profile in DB: {e}"
                 )
     # funzione per la creazione delle collection
     def create_collections(self):
         if self.db is None:
-            print("Nessuna connessione al db")
+            print("State: No connection to DB")
             return
 
         try:

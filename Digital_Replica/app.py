@@ -13,8 +13,6 @@ from services.profile_service import maintenance_profile
 
 
 
-
-
 app = Flask(__name__)
 app.add_url_rule('/api/registration', view_func=registration_pf, methods=['POST'])
 app.add_url_rule('/api/sendData', view_func=send_data, methods=['POST'])

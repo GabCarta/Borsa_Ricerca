@@ -1,26 +1,26 @@
+id: prova1
 Profile:
+  id: prova1
   OS: Android
-  id: Smartphone01
+database:
+  host: mio_mongo
+  port: 27017
+  db_name: DB_generico
+  dbname: DB_generico
+collections:
+  luce:
+    db_collection_name: luce
+    required_fields:
+      id: string
+    allowed_id:
+    - luce
+    allowed_values:
+      stato:
+      - 'ON'
+      - 'OFF'
+      consumo: float
 brokers:
   mqtt:
     broker_address: broker.mqttdashboard.com
     port: 1883
     topic_subscribe: device_carta
-collections:
-  Luce:
-    allowed_id:
-    - ligh_kit
-    - ligh_bed
-    - ligh_bath
-    - ligh_liv
-    allowed_values:
-      consumo: float
-      "intensit\xE0_luminosa": float
-      stato:
-      - 'ON'
-      - 'OFF'
-    db_collection_name: Luce
-    required_fields:
-      id: string
-database: null
-id: Smartphone01
