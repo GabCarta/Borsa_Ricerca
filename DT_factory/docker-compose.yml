@@ -1,43 +1,42 @@
 services:
- # Database
+  # Database
   mio_mongo:
-    image: mongo:8.0
-    container_name: mio_mongo
+    image: mongo:7.0
+    container_name: mio-mongo
     ports:
       - "27018:27017" 
     networks:
       - rete_comune
 
-
   # Service
-  servizio_consumi:
-    image: gcrta29/service:v1
-    container_name: servizio_consumi
+  servizio-consumi:
+    image: gcrta29/servizio-consumi:v1
+    container_name: servizio-consumi
     ports:
       - "5001:5001"
     depends_on:
       - mio_mongo
     environment:
-      - DATABASE_URL=mongodb://mio_mongo:27017/DB_generico
+      - DATABASE_URL=mongodb://mio-mongo:27017/DB_generico
     networks:
       - rete_comune
 
- # Digital Replica
-  digital_replica:
-    image: gcrta29/digital_replica:v1
-    container_name: digital_replica
+  # Digital Replica
+  digital-replica:
+    image: gcrta29/digital-replica:v1
+    container_name: digital-replica
     ports:
       - "5000:5000"
     volumes:
-    - "../Digital_Replica/profile:/app/profile"
-   
+      - "../Digital_Replica/profile:/app/profile"
     depends_on:
       - mio_mongo
     environment:
-      - DATABASE_URL=mongodb://mio_mongo:27017/DB_generico
+      - DATABASE_URL=mongodb://mio-mongo:27017/DB_generico
     networks:
       - rete_comune
 
+  # Authentication
   authentication:
     image: gcrta29/authentication:v1
     container_name: authentication
@@ -46,21 +45,22 @@ services:
     depends_on:
       - mio_mongo
     environment:
-      - DATABASE_URL=mongodb://mio_mongo:27017/DB_generico
+      - DATABASE_URL=mongodb://mio-mongo:27017/DB_generico
     networks:
       - rete_comune
 
+  # Dashboard
   dashboard:
-      image: gcrta29/dashboard:v1
-      container_name: dashboard
-      ports:
-        - "8501:8501"
-      depends_on:
-        - digital_replica
-        - servizio_consumi
-        - authentication
-      networks:
-        - rete_comune
+    image: gcrta29/dashboard:v4
+    container_name: dashboard
+    ports:
+      - "8501:8501"
+    depends_on:
+      - digital-replica
+      - servizio-consumi
+      - authentication
+    networks:
+      - rete_comune
 
 networks:
   rete_comune:

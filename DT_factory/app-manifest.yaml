@@ -28,8 +28,7 @@ spec:
   ports:
   - port: 27017
     targetPort: 27017
-    nodePort: 27018 # Espone la porta 27018 sulla macchina host (come in compose)
-  type: NodePort
+  
 
 ---
 #Service
@@ -48,7 +47,7 @@ spec:
     spec:
       containers:
       - name: servizio-consumi
-        image: gcrta29/service:v1 
+        image: gcrta29/servizio-consumi:v1 
         ports:
         - containerPort: 5001
         env:
@@ -83,7 +82,7 @@ spec:
     spec:
       containers:
       - name: digital-replica
-        image: gcrta29/digital_replica:v1
+        image: gcrta29/digital-replica:v1
         ports:
         - containerPort: 5000
         env:
@@ -96,7 +95,7 @@ spec:
       - name: profile-data
         hostPath:
          
-          path: /percorso/assoluto/verso/Digital_Replica/profile
+          path: "C:\Users\carta\Desktop\Borsa di ricerca\Digital_Replica\profile"
           type: DirectoryOrCreate
 ---
 apiVersion: v1
@@ -160,7 +159,7 @@ spec:
     spec:
       containers:
       - name: dashboard
-        image: gcrta29/dashboard:v1
+        image: gcrta29/dashboard:v4
         ports:
         - containerPort: 8501
 ---
