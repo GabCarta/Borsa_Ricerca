@@ -29,13 +29,15 @@ if st.sidebar.button("Logout"):
 st.title(" Energy Security Check")
 if st.button(" Launch Consumption Scan", type="primary", use_container_width=True):
     try:
-        r = requests.get("http://servizio_consumi:5001/api/check_consumi")
+        r = requests.get("http://servizio-consumi:5001/api/check_consumi")
         if r.status_code == 200:
             dati = r.json()
             st.success(f" {dati.get('Stato')}")
-            res = dati.get("Result", {})
-            acc = res.get("Regular_Devices_On", [])
-            spt = res.get("Forcibly_Shutdown_Devices", [])
+            
+            
+            res = dati.get("Risultati", {})
+            acc = res.get("Dispositivi_Regolari_Accesi", [])
+            spt = res.get("Dispositivi_Spenti_Forzatamente", [])
             
             c1, c2 = st.columns(2)
             with c1:
@@ -49,6 +51,8 @@ if st.button(" Launch Consumption Scan", type="primary", use_container_width=Tru
                     st.dataframe(spt, use_container_width=True)
                 else: st.success("No exceedances.")
         else:
-            st.error(" API Error.")
-    except Exception:
-        st.error(" Unable to connect to servizio_consumi:5001")
+            st.error(f" API Error {r.status_code}.")
+            
+    except Exception as e:
+        
+        st.error(f" Unable to connect to servizio_consumi:5001. Dettaglio: {e}")

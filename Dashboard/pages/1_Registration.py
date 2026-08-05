@@ -150,13 +150,13 @@ if submit_button:
                 "mqtt": {"broker_address": broker, "port": port, "topic_subscribe": topic}
             },
             "database": {
-                "host" : "mio_mongo",
+                "host" : "mio-mongo",
                 "port" : 27017,
                 "db_name" : "DB_generico",
             }
         }
 
-        API_URL = "http://digital_replica:5000/api/registration" 
+        API_URL = "http://digital-replica:5000/api/registration" 
         try:
             risposta = requests.post(API_URL, json=payload_registrazione)
             if risposta.status_code == 200:
@@ -181,5 +181,5 @@ if submit_button:
                 
             else:
                 st.error(f" Error(Status {risposta.status_code})")
-        except Exception:
-            st.error(" Unable to connect to 'digital_replica'.")
+        except Exception as e:
+            st.error(f" Errore di connessione reale: {e}")

@@ -77,7 +77,7 @@ if submit_btn:
 
 
         try:
-            risposta = requests.post(f"http://digital_replica:5000/api/sendData", json=payload)
+            risposta = requests.post(f"http://digital-replica:5000/api/sendData", json=payload)
             if risposta.status_code == 200:
                 st.success(" Data sent successfully!")
                 st.json(risposta.json())
