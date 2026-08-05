@@ -132,14 +132,14 @@ def send_data():
 # funzione getData
 @app.route('/api/getData', methods=['GET'])  #to get data from DB
 def get_data():
-    # read query parameters
-    id_dispositivo = request.args.get('id') 
+    # read query parameters (Rimosso id_dispositivo)
     nome_collezione_yaml = request.args.get('collection') 
     mode = request.args.get('mode', 'history') 
     sender_id = request.args.get('sender_id')
 
-    if not id_dispositivo or not nome_collezione_yaml or not sender_id:
-        return jsonify({"State": "Error: Missing id or collection or sender_id  "}), 400
+    # Aggiornato il controllo per non cercare più 'id'
+    if not nome_collezione_yaml or not sender_id:
+        return jsonify({"State": "Error: Missing collection or sender_id"}), 400
     
     db, config = db_instance.get_connection() 
     if db is None:
@@ -149,12 +149,14 @@ def get_data():
     # modalità per leggere i dati da db
     if mode == 'history':
        
-        nome_db = config['collections'].get(nome_collezione_yaml, {}).get('db_collection_name')
+        collezioni = config.get('collections', {})
+        nome_db = collezioni.get(nome_collezione_yaml, {}).get('db_collection_name')
         if not nome_db:
             return jsonify({"State": "Error: Collection is not defined in YAML file"}), 400
 
         
-        cursor = db[nome_db].find({"id": id_dispositivo}) #filter every data where id = id_dispositivo
+        # Ora filtriamo i dati usando il sender_id al posto del vecchio id_dispositivo
+        cursor = db[nome_db].find({"id": sender_id}) 
        
       
         lista_risultati = []
@@ -195,7 +197,8 @@ def get_data():
             client.on_message = on_message #how to do client in future
             client.connect(broker_address, broker_port, 60) #connect to broker 60 seconds timeout
 
-            topic = f"{topic_base}/{id_dispositivo}"
+            # Il topic ora si compone usando sender_id
+            topic = f"{topic_base}/{sender_id}"
             client.subscribe(topic) # subscribe to topic
             client.loop_start() #sent to server and wait for message
 

@@ -1,19 +1,19 @@
-id: prova1
+id: prova
 Profile:
-  id: prova1
+  id: prova
   OS: Android
 database:
-  host: mio_mongo
+  host: mio-mongo
   port: 27017
   db_name: DB_generico
   dbname: DB_generico
 collections:
-  luce:
-    db_collection_name: luce
+  cond:
+    db_collection_name: cond
     required_fields:
       id: string
     allowed_id:
-    - luce
+    - cond
     allowed_values:
       stato:
       - 'ON'
