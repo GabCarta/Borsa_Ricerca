@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: mongo
-        image: mongo:8.0
+        image: mongo:7.0
         ports:
         - containerPort: 27017
 ---
@@ -47,7 +47,7 @@ spec:
     spec:
       containers:
       - name: servizio-consumi
-        image: gcrta29/servizio-consumi:v1 
+        image: gcrta29/servizio-consumi:v2
         ports:
         - containerPort: 5001
         env:
@@ -82,7 +82,7 @@ spec:
     spec:
       containers:
       - name: digital-replica
-        image: gcrta29/digital-replica:v1
+        image: gcrta29/digital-replica:v10
         ports:
         - containerPort: 5000
         env:
@@ -95,7 +95,8 @@ spec:
       - name: profile-data
         hostPath:
          
-          path: "C:\Users\carta\Desktop\Borsa di ricerca\Digital_Replica\profile"
+          path: /home/mclab/Desktop/Borsa/Digital_Replica/profile
+
           type: DirectoryOrCreate
 ---
 apiVersion: v1
@@ -157,9 +158,10 @@ spec:
       labels:
         app: dashboard
     spec:
+      serviceAccountName : streamlit-admin
       containers:
       - name: dashboard
-        image: gcrta29/dashboard:v4
+        image: gcrta29/dashboard:v10
         ports:
         - containerPort: 8501
 ---
