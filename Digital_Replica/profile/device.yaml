@@ -1,6 +1,6 @@
-id: prova
+id: prova2
 Profile:
-  id: prova
+  id: prova2
   OS: Android
 database:
   host: mio-mongo
@@ -8,17 +8,18 @@ database:
   db_name: DB_generico
   dbname: DB_generico
 collections:
-  cond:
-    db_collection_name: cond
+  Condizionatore:
+    db_collection_name: Condizionatore
     required_fields:
       id: string
     allowed_id:
-    - cond
+    - Condizionatore
     allowed_values:
       stato:
       - 'ON'
       - 'OFF'
       consumo: float
+      Temperature: float
 brokers:
   mqtt:
     broker_address: broker.mqttdashboard.com

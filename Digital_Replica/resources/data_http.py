@@ -149,23 +149,16 @@ def get_data():
     # modalità per leggere i dati da db
     if mode == 'history':
        
-        collezioni = config.get('collections', {})
-        nome_db = collezioni.get(nome_collezione_yaml, {}).get('db_collection_name')
-        if not nome_db:
-            return jsonify({"State": "Error: Collection is not defined in YAML file"}), 400
-
-        
-        # Ora filtriamo i dati usando il sender_id al posto del vecchio id_dispositivo
-        cursor = db[nome_db].find({"id": sender_id}) 
+        cursor = db[nome_collezione_yaml].find({"id": sender_id}) 
        
-      
         lista_risultati = []
-        for documento in cursor: # loop to convert data into list
+        for documento in cursor:
             documento['_id'] = str(documento['_id']) # Convert ObjectId to string
-            lista_risultati.append(documento) # add into list
+            lista_risultati.append(documento)
         
         if len(lista_risultati) == 0:
-            return jsonify({"State": "Not Found", "message": "Error: Invalid parameters"}), 404
+            return jsonify({"State": "Not Found", "message": "Nessun dato trovato per questo ID"}), 404
+            
         return jsonify({"State": "Correct", "dati": lista_risultati}), 200
 
     #  Modalità realtime, per intercettare i messaggi inviati con mqtt da setdata
