@@ -51,7 +51,8 @@ if st.button(" Launch Consumption Scan", type="primary", use_container_width=Tru
                     st.dataframe(spt, use_container_width=True)
                 else: st.success("No exceedances.")
         else:
-            st.error(f" API Error {r.status_code}.")
+          
+            st.error(f" API Error {r.status_code}: {r.text}")
             
     except Exception as e:
         
