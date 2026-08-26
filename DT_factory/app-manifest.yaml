@@ -161,7 +161,7 @@ spec:
       serviceAccountName : streamlit-admin
       containers:
       - name: dashboard
-        image: gcrta29/dashboard:v10
+        image: gcrta29/dashboard:v15
         ports:
         - containerPort: 8501
 ---
