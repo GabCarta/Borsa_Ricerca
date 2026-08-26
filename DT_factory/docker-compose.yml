@@ -10,7 +10,7 @@ services:
 
   # Service
   servizio-consumi:
-    image: gcrta29/servizio-consumi:v1
+    image: gcrta29/servizio-consumi:v2
     container_name: servizio-consumi
     ports:
       - "5001:5001"
@@ -23,7 +23,7 @@ services:
 
   # Digital Replica
   digital-replica:
-    image: gcrta29/digital-replica:v1
+    image: gcrta29/digital-replica:v10
     container_name: digital-replica
     ports:
       - "5000:5000"
@@ -51,7 +51,7 @@ services:
 
   # Dashboard
   dashboard:
-    image: gcrta29/dashboard:v4
+    image: gcrta29/dashboard:v16
     container_name: dashboard
     ports:
       - "8501:8501"
