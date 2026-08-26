@@ -84,7 +84,7 @@ with st.container(border=True):
     st.subheader("3. Collection Data")
     col5, col6 = st.columns(2)
     col_name = col5.text_input("Collection Name", value="Name DR")
-    target_id = col6.text_input("Authorized ID in DB", value="value accepted")
+    target_id = col6.text_input("Repeat Collection Name", value="Name DR")
 
     st.markdown("#####  Allowed Parameters")
     c1, c2 = st.columns(2)

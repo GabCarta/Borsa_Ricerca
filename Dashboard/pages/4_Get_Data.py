@@ -28,14 +28,14 @@ st.title(" Get Data")
 with st.container(border=True):
     c1, c2 = st.columns(2)
     # Ho spostato col_name nella seconda colonna al posto di device_id
-    sender_id = c1.text_input("Sender ID", value="Sensore01")
-    col_name = c2.text_input("Nome Collezione", value="Termostato")
+    sender_id = c1.text_input("Collection Name", value="Condizionatore")
+    col_name = c2.text_input("Repeat Collection Name", value="Condizionatore")
     mode = st.radio("Mode:", ["history", "realtime"], horizontal=True)
     
     submit_getdata = st.button("Request Data", type="primary")
 
 if submit_getdata:
-    # Rimosso "id": device_id dai parametri
+
     params = {"collection": col_name, "mode": mode, "sender_id": sender_id}
     try:
         r = requests.get("http://digital-replica:5000/api/getData", params=params)

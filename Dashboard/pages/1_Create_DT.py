@@ -3,7 +3,7 @@ import requests
 import uuid
 from kubernetes import client, config
 
-def spawn_digital_twin(sensor_name):
+def spawn_digital_twin(pod_name, device_id):
     try:
         config.load_incluster_config()
     except:
@@ -12,30 +12,30 @@ def spawn_digital_twin(sensor_name):
     apps_v1 = client.AppsV1Api()
 
     container = client.V1Container(
-        name=f"dr-{sensor_name}",
+        name=f"dr-{pod_name}",
         image="gcrta29/digital-replica:v10", 
-        env=[client.V1EnvVar(name="SENDER_ID", value=sensor_name)]
+        env=[client.V1EnvVar(name="SENDER_ID", value=device_id)]
     )
 
     template = client.V1PodTemplateSpec(
-        metadata=client.V1ObjectMeta(labels={"app": f"dr-{sensor_name}"}),
+        metadata=client.V1ObjectMeta(labels={"app": f"dr-{pod_name}"}),
         spec=client.V1PodSpec(containers=[container])
     )
 
     deployment = client.V1Deployment(
         api_version="apps/v1",
         kind="Deployment",
-        metadata=client.V1ObjectMeta(name=f"deployment-{sensor_name}"),
+        metadata=client.V1ObjectMeta(name=f"deployment-{pod_name}"),
         spec=client.V1DeploymentSpec(
             replicas=1,
-            selector=client.V1LabelSelector(match_labels={"app": f"dr-{sensor_name}"}),
+            selector=client.V1LabelSelector(match_labels={"app": f"dr-{pod_name}"}),
             template=template
         )
     )
 
     try:
         apps_v1.create_namespaced_deployment(namespace="default", body=deployment)
-        st.success(f"Pod per {sensor_name} generato su K3s!")
+        st.success(f"Pod 'deployment-{pod_name}' generato su K3s!")
     except Exception as e:
         st.error(f"Errore K3s: {e}")
 
@@ -166,8 +166,9 @@ if st.button("Assemble and Save Digital Twin", type="primary", use_container_wid
                 res_create = requests.post(f"{AUTH_URL}/api/create_dt", json=payload_dt)
                 if res_create.status_code == 201:
                     
-                    sensor_name_clean = dr_selezionata.get("collezione").lower().replace(" ", "-")
-                    spawn_digital_twin(sensor_name_clean)
+                    pod_name_clean = nome_dt.lower().replace(" ", "-").replace("_", "-")
+                    device_id = dr_selezionata.get("device_id")
+                    spawn_digital_twin(pod_name_clean, device_id)
                     
                     st.success("Build and save successful!")
                     st.rerun() 
