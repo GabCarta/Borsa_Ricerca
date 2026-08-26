@@ -8,7 +8,21 @@ import requests
 if 'logged_in' not in st.session_state or not st.session_state['logged_in']:
     st.switch_page("app.py")
 st.markdown("""<style>[data-testid="stSidebarNav"] {display: none;}</style>""", unsafe_allow_html=True)
-
+AUTH_URL = "http://authentication:5005"
+user_email = st.session_state['user_email']
+try:
+    res_dts = requests.get(f"{AUTH_URL}/api/user_dts?email={user_email}")
+    if res_dts.status_code == 200:
+        dts = res_dts.json().get("dts", [])
+        
+        if not dts:
+            st.info("You have not assembled any Digital Twins yet. Create one below!")
+            if st.button("Create a Digital Twin", type="primary"):
+                st.switch_page("pages/1_Create_DT.py")
+            st.stop()
+except Exception:
+    st.error("Error connecting to the central database for reading DTs.")
+    st.stop()
 # menu about DR and send data "
 st.sidebar.markdown("###  Gestione DT")
 st.sidebar.page_link("pages/1_Registration.py", label="Registration")
