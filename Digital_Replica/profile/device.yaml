@@ -1,7 +1,6 @@
-id: prova2
+id: prova
 Profile:
-  id: prova2
-  OS: Android
+  id: prova
 database:
   host: mio-mongo
   port: 27017
@@ -19,7 +18,6 @@ collections:
       - 'ON'
       - 'OFF'
       consumo: float
-      Temperature: float
 brokers:
   mqtt:
     broker_address: broker.mqttdashboard.com
