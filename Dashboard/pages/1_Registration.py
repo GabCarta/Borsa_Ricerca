@@ -12,17 +12,15 @@ if 'logged_in' not in st.session_state or not st.session_state['logged_in']:
 st.markdown("""<style>[data-testid="stSidebarNav"] {display: none;}</style>""", unsafe_allow_html=True)
 
 # menu about the Digital Twin
-st.sidebar.markdown("###  DT Management")
+st.sidebar.markdown("###  DR Management")
 st.sidebar.page_link("pages/1_Registration.py", label="Registration")
-st.sidebar.page_link("pages/2_Set_Data.py", label="Set Data")
-st.sidebar.page_link("pages/3_Send_Data.py", label="Send Data")
-st.sidebar.page_link("pages/4_Get_Data.py", label="Get Data")
+
 
 # Tasto per tornare indietro
 st.sidebar.divider()
 st.sidebar.page_link("app.py", label=" Turn back to Home DT")
 
-st.sidebar.success(f" Ciao, {st.session_state['user_name']}")
+st.sidebar.success(f" Hello, {st.session_state['user_name']}")
 if st.sidebar.button("Logout"):
     st.session_state['logged_in'] = False
     st.switch_page("app.py")
@@ -71,9 +69,7 @@ st.title(" Digital Replica Registration")
 
 with st.container(border=True):
     st.subheader("1. Device Profile")
-    col1, col2 = st.columns(2)
-    device_id = col1.text_input("Device ID", value=st.session_state['user_email'])
-    device_os = col2.text_input("Operating System", value="Android")
+    device_id = st.text_input("User ID", value=st.session_state['user_email'], disabled=True)
 
     st.subheader("2. MQTT Configuration")
     col3, col4 = st.columns(2)
@@ -81,17 +77,13 @@ with st.container(border=True):
     port = col4.number_input("MQTT Port", value=1883, step=1)
     topic = st.text_input("Subscription Topic", value="device_carta")
 
-    st.subheader("3. Collection Data")
+    st.subheader("3. DR Name")
     col5, col6 = st.columns(2)
     col_name = col5.text_input("Collection Name", value="Name DR")
     target_id = col6.text_input("Repeat Collection Name", value="Name DR")
 
-    st.markdown("#####  Allowed Parameters")
-    c1, c2 = st.columns(2)
-    include_stato = c1.checkbox("State (ON/OFF)", value=True)
-    include_consumo = c2.checkbox("Consumption (float)", value=True)
 
-    st.markdown("#####  Additional Parameters")
+    st.markdown("#####  Common Used Parameters")
     st.markdown("Select Parameters:")
     
     # lista parametri disponibili
@@ -128,8 +120,8 @@ with st.container(border=True):
 if submit_button:
     with st.spinner("Creating the Digital Replica..."):
         valori_ammessi = {}
-        if include_stato: valori_ammessi["stato"] = ["ON", "OFF"]
-        if include_consumo: valori_ammessi["consumo"] = "float"
+        valori_ammessi["stato"] = ["ON", "OFF"]
+        valori_ammessi["consumo"] = "float"
         
       
         for param in parametri_selezionati:
@@ -137,7 +129,7 @@ if submit_button:
             valori_ammessi[param] = tipo_parametro
 
         payload_registrazione = {
-            "Profile": {"id": device_id, "OS": device_os},
+            "Profile": {"id": device_id},
             "collections": {
                 col_name: {
                     "db_collection_name": col_name,
@@ -169,7 +161,8 @@ if submit_button:
                     "email": st.session_state['user_email'], 
                     "device_id": device_id,
                     "collezione": col_name,
-                    "key": chiave_gen
+                    "key": chiave_gen,
+                    "struttura_completa" : payload_registrazione
                 }
                 
                 try:

@@ -23,12 +23,18 @@ try:
 except Exception:
     st.error("Error connecting to the central database for reading DTs.")
     st.stop()
-# menu about DR and send data "
-st.sidebar.markdown("###  DT Management")
-st.sidebar.page_link("pages/1_Registration.py", label="Registration")
-st.sidebar.page_link("pages/2_Set_Data.py", label="Set Data")
-st.sidebar.page_link("pages/3_Send_Data.py", label="Send Data")
+st.sidebar.markdown("###  DT  Management")
+st.sidebar.page_link("app.py", label="Home")
+st.sidebar.page_link("pages/1_My_DTs.py", label="My DTs") 
+st.sidebar.page_link("pages/1_Create_DT.py", label="Create DT") 
+st.sidebar.page_link("pages/3_Ricerca_DR_associate.py", label="Ricerca DR associate")
+st.sidebar.page_link("pages/4_Gestione_Chiavi.py", label="Gestione Chiavi")
+st.sidebar.divider()
+st.sidebar.markdown("###  Test DT")
+st.sidebar.page_link("pages/2_Service.py", label="Service")
 st.sidebar.page_link("pages/4_Get_Data.py", label="Get Data")
+st.sidebar.page_link("pages/3_Send_Data.py", label="Send Data(HTTP)")
+st.sidebar.page_link("pages/2_Set_Data.py", label="Set Data(MQTT)")
 
 # Tasto per tornare indietro
 st.sidebar.divider()
@@ -45,11 +51,11 @@ st.title(f"{' Send Data'}")
 with st.container(border=True):
     st.subheader("1. Authentication")
     col1, col2 = st.columns(2)
-    sender_id = col1.text_input("Sender ID", value="Sensore01")
+    sender_id = col1.text_input("User ID", value=st.session_state['user_email'], disabled=True)
     security_key = col2.text_input("Security Key", type="password")
 
     st.subheader("2. Target")
-    device_id = st.text_input("Target Device ID", value="termostato_1")
+    device_id = st.text_input("Collection Name", value="DR name")
 
     st.subheader("3. Payload Builder")
     c1, c2 = st.columns(2)

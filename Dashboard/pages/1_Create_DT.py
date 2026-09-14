@@ -3,7 +3,7 @@ import requests
 import uuid
 from kubernetes import client, config
 
-def spawn_digital_twin(pod_name, device_id):
+def spawn_digital_twin(pod_name, device_id, service_id):
     try:
         config.load_incluster_config()
     except:
@@ -11,15 +11,26 @@ def spawn_digital_twin(pod_name, device_id):
 
     apps_v1 = client.AppsV1Api()
 
-    container = client.V1Container(
+    container_dr = client.V1Container(
         name=f"dr-{pod_name}",
         image="gcrta29/digital-replica:v10", 
-        env=[client.V1EnvVar(name="SENDER_ID", value=device_id)]
+        env=[
+            client.V1EnvVar(name="SENDER_ID", value=device_id),
+            client.V1EnvVar(name="SERVICE_ID", value=service_id)
+        ]
+    )
+
+    container_service = client.V1Container(
+        name=f"srv-{pod_name}",
+        image="gcrta29/servizio-consumi:v2", 
+        env=[
+            client.V1EnvVar(name="SERVICE_ID", value=service_id)
+        ]
     )
 
     template = client.V1PodTemplateSpec(
-        metadata=client.V1ObjectMeta(labels={"app": f"dr-{pod_name}"}),
-        spec=client.V1PodSpec(containers=[container])
+        metadata=client.V1ObjectMeta(labels={"app": f"dt-{pod_name}"}),
+        spec=client.V1PodSpec(containers=[container_dr, container_service])
     )
 
     deployment = client.V1Deployment(
@@ -28,14 +39,14 @@ def spawn_digital_twin(pod_name, device_id):
         metadata=client.V1ObjectMeta(name=f"deployment-{pod_name}"),
         spec=client.V1DeploymentSpec(
             replicas=1,
-            selector=client.V1LabelSelector(match_labels={"app": f"dr-{pod_name}"}),
+            selector=client.V1LabelSelector(match_labels={"app": f"dt-{pod_name}"}),
             template=template
         )
     )
 
     try:
         apps_v1.create_namespaced_deployment(namespace="default", body=deployment)
-        st.success(f"Pod 'deployment-{pod_name}' generato su K3s!")
+        st.success(f"Pod 'deployment-{pod_name}' generato su K3s con 2 container!")
     except Exception as e:
         st.error(f"Errore K3s: {e}")
 
@@ -47,10 +58,17 @@ st.markdown("""<style>[data-testid="stSidebarNav"] {display: none;}</style>""", 
 
 st.sidebar.markdown("###  DT  Management")
 st.sidebar.page_link("app.py", label="Home")
+st.sidebar.page_link("pages/1_My_DTs.py", label="My DTs") 
 st.sidebar.page_link("pages/1_Create_DT.py", label="Create DT") 
-st.sidebar.page_link("pages/2_Service.py", label="Service")
 st.sidebar.page_link("pages/3_Ricerca_DR_associate.py", label="Ricerca DR associate")
 st.sidebar.page_link("pages/4_Gestione_Chiavi.py", label="Gestione Chiavi")
+st.sidebar.divider()
+st.sidebar.markdown("###  Test DT")
+st.sidebar.page_link("pages/2_Service.py", label="Service")
+st.sidebar.page_link("pages/4_Get_Data.py", label="Get Data")
+st.sidebar.page_link("pages/3_Send_Data.py", label="Send Data(HTTP)")
+st.sidebar.page_link("pages/2_Set_Data.py", label="Set Data(MQTT)")
+
 
 st.sidebar.divider()
 st.sidebar.success(f" Hello, {st.session_state['user_name']}")
@@ -61,35 +79,7 @@ if st.sidebar.button("Logout"):
 AUTH_URL = "http://authentication:5005"
 user_email = st.session_state['user_email']
 
-st.title(" Digital Twin Factory")
-
-st.header(" Your Digital Twins")
-
-try:
-    res_dts = requests.get(f"{AUTH_URL}/api/user_dts?email={user_email}")
-    if res_dts.status_code == 200:
-        dts = res_dts.json().get("dts", [])
-        
-        if not dts:
-            st.info("You have not assembled any Digital Twins yet. Create one below!")
-        else:
-            for dt in dts:
-                with st.expander(f"DT: {dt.get('dt_name')} (Servizio: {dt.get('service_name')})"):
-                    st.write(f"**ID DT:** `{dt.get('dt_id')}`")
-                    st.write(f"**Associate DR:** {dt.get('dr_name')} (ID Sensore: `{dt.get('dr_id')}`)")
-                    
-                    if st.button("Management DT", type="primary", key=f"btn_gestione_{dt.get('dt_id')}"):
-                        st.session_state['dt_attivo'] = dt
-                        st.session_state['dr_attiva'] = dt.get('dr_id')
-                        st.switch_page("pages/3_Send_Data.py")
-    else:
-        st.warning(f"Unable to load existing DTs (Status {res_dts.status_code}).")
-except Exception:
-    st.error("Error connecting to the central database for reading DTs.")
-
-st.divider()
-
-st.header(" Assemble a New Digital Twin")
+st.title(" Assemble a New Digital Twin")
 st.markdown("Choose a **Digital Replica** and associate it with a **Service**.")
 
 replicas = []
@@ -161,6 +151,8 @@ if st.button("Assemble and Save Digital Twin", type="primary", use_container_wid
             "service_name": servizio_selezionato.get("Name")
         }
         
+        cambio_pagina_autorizzato = False
+        
         with st.spinner("Saving to the database and deploying on K3s..."):
             try:
                 res_create = requests.post(f"{AUTH_URL}/api/create_dt", json=payload_dt)
@@ -168,11 +160,17 @@ if st.button("Assemble and Save Digital Twin", type="primary", use_container_wid
                     
                     pod_name_clean = nome_dt.lower().replace(" ", "-").replace("_", "-")
                     device_id = dr_selezionata.get("device_id")
-                    spawn_digital_twin(pod_name_clean, device_id)
+                    service_id = servizio_selezionato.get("service_id")
+                    
+                    spawn_digital_twin(pod_name_clean, device_id, service_id)
                     
                     st.success("Build and save successful!")
-                    st.rerun() 
+                    cambio_pagina_autorizzato = True
+                    
                 else:
                     st.error(f"Server error while saving ({res_create.status_code})")
-            except Exception:
-                st.error("Unable to contact the backend to save the Digital Twin.")
+            except Exception as e:
+                st.error(f"Errore durante la creazione: {e}")
+
+        if cambio_pagina_autorizzato:
+            st.switch_page("pages/1_My_DTs.py")

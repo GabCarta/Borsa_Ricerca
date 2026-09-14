@@ -21,7 +21,7 @@ if st.sidebar.button("Logout"):
     st.switch_page("app.py")
 
 
-st.title("Management of Security Keys")
+st.title("Management of DR Keys")
 st.markdown(f"Security keys associated with the account: **{st.session_state['user_email']}**")
 
 with st.spinner("Retrieving keys from the database..."):

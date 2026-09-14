@@ -6,6 +6,16 @@ import json
 
 st.set_page_config(page_title="Control Center IoT", layout="wide")
 
+st.markdown(
+    """
+    <style>
+        [data-testid="stSidebar"] {
+            display: none;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 AUTH_URL = "http://authentication:5005"
 
 # Inizializzo lo stato della sessione
@@ -18,7 +28,7 @@ if 'user_email' not in st.session_state:
 
 # Se l'utente è già loggato, mandalo direttamente alla dashboard
 if st.session_state['logged_in']:
-    st.switch_page("pages/1_Create_DT.py")
+    st.switch_page("pages/1_My_DTs.py")
 
 st.title("Access Control Center IoT")
 
@@ -36,7 +46,7 @@ with tab_login:
                 st.session_state['logged_in'] = True
                 st.session_state['user_name'] = response.json().get('name')
                 st.session_state['user_email'] = login_email 
-                st.switch_page("pages/1_Create_DT.py")  # Reindirizza alla pagina di creazione del Digital Twin
+                st.switch_page("pages/1_My_DTs.py")  # Reindirizza alla pagina visualizzazione dei Digital Twin
             else:
                 try:
                     st.error(response.json().get('error', "Errore di login"))
