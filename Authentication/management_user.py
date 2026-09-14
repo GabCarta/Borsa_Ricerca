@@ -87,6 +87,7 @@ def link_replica():
     device_id = data.get('device_id') # Questo ora può essere sempre uguale (es. la mail)
     collezione = data.get('collezione')
     chiave = data.get('key')
+    struttura_completa = data.get('struttura_completa')
 
     if not all([email, device_id, collezione, chiave]):
         return jsonify({"error": "missing data"}), 400
@@ -99,7 +100,8 @@ def link_replica():
             "device_id": device_id,
             "owner_email": email,  
             "collezione": collezione,
-            "key": chiave
+            "key": chiave,
+            "struttura_completa": struttura_completa
         }
       
         db.User_Devices.insert_one(nuovo_dispositivo)
@@ -126,7 +128,8 @@ def get_user_replicas():
             replicas.append({
                 "device_id": doc.get("device_id"),
                 "collezione": doc.get("collezione"),
-                "key": doc.get("key")
+                "key": doc.get("key"),
+                "struttura_completa": doc.get("struttura_completa")
             })
             
         return jsonify({"replicas": replicas}), 200
