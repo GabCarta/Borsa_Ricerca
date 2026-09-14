@@ -38,7 +38,7 @@ services:
 
   # Authentication
   authentication:
-    image: gcrta29/authentication:v1
+    image: gcrta29/authentication:v4
     container_name: authentication
     ports:
       - "5005:5005"
@@ -51,7 +51,7 @@ services:
 
   # Dashboard
   dashboard:
-    image: gcrta29/dashboard:v16
+    image: gcrta29/dashboard:v30
     container_name: dashboard
     ports:
       - "8501:8501"

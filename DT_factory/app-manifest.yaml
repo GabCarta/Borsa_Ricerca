@@ -126,7 +126,7 @@ spec:
     spec:
       containers:
       - name: authentication
-        image: gcrta29/authentication:v1
+        image: gcrta29/authentication:v4
         ports:
         - containerPort: 5005
         env:
@@ -161,7 +161,7 @@ spec:
       serviceAccountName : streamlit-admin
       containers:
       - name: dashboard
-        image: gcrta29/dashboard:v16
+        image: gcrta29/dashboard:v30
         ports:
         - containerPort: 8501
 ---
