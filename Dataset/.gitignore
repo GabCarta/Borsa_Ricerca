@@ -1,0 +1,3 @@
+# i dataset completi non vanno nel repository
+data/*
+!data/.gitkeep

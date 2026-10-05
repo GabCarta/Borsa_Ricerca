@@ -1,0 +1,56 @@
+# Profilo del dataset di riferimento.
+# Per usare un altro dataset basta copiare questo file e cambiare
+# solo le sezioni "dataset", "colonne" e "parametri": il codice resta uguale.
+
+dataset:
+  nome: Environmental Sensor Telemetry Data
+  fonte: https://www.kaggle.com/datasets/garystafford/environmental-sensor-data-132k
+  file: data/iot_telemetry_data.csv   # percorso relativo a questo progetto (cartella Dataset/)
+  formato: csv
+  separatore: ","
+
+colonne:
+  timestamp:
+    colonna: ts
+    formato: epoch_s          # epoch_s | epoch_ms | iso | oppure un formato strftime, es. "%d/%m/%Y %H:%M:%S"
+  dispositivo:
+    colonna: device
+    # MAC del dataset -> id della DR. Da verificare sul CSV scaricato.
+    # Se un valore non e' nella mappa viene usato cosi' com'e'.
+    mappa:
+      "b8:27:eb:bf:9d:51": sensore_1
+      "00:0f:00:70:91:0a": sensore_2
+      "1c:bf:ce:15:ec:4d": sensore_3
+    # In alternativa, per un dataset con un solo dispositivo:
+    # id_fisso: sensore_1
+
+# Parametri standard del Digital Twin -> colonna del file sorgente.
+# tipo: float | int | string | bool
+parametri:
+  temperatura: {colonna: temp,     tipo: float, unita: "°C"}
+  umidita:     {colonna: humidity, tipo: float, unita: "%"}
+  co:          {colonna: co,       tipo: float, unita: "ppm"}
+  gpl:         {colonna: lpg,      tipo: float, unita: "ppm"}
+  fumo:        {colonna: smoke,    tipo: float, unita: "ppm"}
+  luce:        {colonna: light,    tipo: bool}
+  movimento:   {colonna: motion,   tipo: bool}
+
+destinazione:
+  url_registrazione: http://127.0.0.1:5000/api/registration
+  url_invio: http://127.0.0.1:5000/api/sendData
+  collezione: Sensori_Ambientali
+  # Profilo usato da --registra (stessa struttura del payload di /api/registration)
+  profilo:
+    id: SensoriAmbientali01
+  database:
+    host: mio-mongo
+    port: 27017
+    db_name: DB_generico
+  brokers:
+    mqtt:
+      broker_address: broker.mqttdashboard.com
+      port: 1883
+      topic_subscribe: device_carta
+
+riproduzione:
+  velocita: 60      # 60 = un minuto di dati in un secondo; 0 = senza pause

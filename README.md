@@ -19,6 +19,7 @@ Il progetto è suddiviso in moduli indipendenti, ognuno con un compito specifico
   DR e del Service presenti sul Docker HUB. All'interno del file `docker-compose.yml` vengono dichiarati anche i broker MQTT e il database centralizzato.
 * **`Service/`**: Contiene i servizi che devono essere utilizzati dalla virtualizzazione dell'oggetto fisico.
 * **`Dashboard/`**: Contiene l'interfaccia grafica per andare a testare il nostro sistema a microservizi.
+* **`Dataset/`**: Simula i sensori fisici riproducendo un dataset IoT pubblico verso la Digital Replica. Le colonne del dataset sono mappate sui parametri del Digital Twin tramite un file YAML, così un dataset diverso si integra cambiando solo la configurazione.
 
 ## Tecnologie Utilizzate
 
