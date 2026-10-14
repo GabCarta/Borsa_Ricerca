@@ -1,25 +1,25 @@
-id: prova
+id: dr_4a77416e
 Profile:
-  id: prova
+  id: dr_4a77416e
+  name: auto
+  description: rwew
+  owner: prova100
 database:
   host: mio-mongo
   port: 27017
-  db_name: DB_generico
-  dbname: DB_generico
+  db_name: Digital_Replica
+  dbname: Digital_Replica
 collections:
-  Condizionatore:
-    db_collection_name: Condizionatore
+  auto:
+    db_collection_name: auto
     required_fields:
       id: string
     allowed_id:
-    - Condizionatore
+    - auto
     allowed_values:
-      stato:
-      - 'ON'
-      - 'OFF'
-      consumo: float
+      Temperature: float
 brokers:
   mqtt:
     broker_address: broker.mqttdashboard.com
     port: 1883
-    topic_subscribe: device_carta
+    topic_subscribe: topic_auto

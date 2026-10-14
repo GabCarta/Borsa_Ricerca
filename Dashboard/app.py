@@ -1,77 +1,65 @@
-"""Contiene il form relativo alla registrazione e al Login dell'utente"""
-import streamlit as st
+"""Punto di ingresso della Dashboard: carica i parametri nel db e apre le pagine"""
+
+import os
+
 import requests
-import json
+import streamlit as st
+import yaml
 
-
-st.set_page_config(page_title="Control Center IoT", layout="wide")
-
-st.markdown(
-    """
-    <style>
-        [data-testid="stSidebar"] {
-            display: none;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 AUTH_URL = "http://authentication:5005"
 
-# Inizializzo lo stato della sessione
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
-if 'user_name' not in st.session_state:
-    st.session_state['user_name'] = ""
-if 'user_email' not in st.session_state:
-    st.session_state['user_email'] = ""
+# file con la lista di partenza dei parametri (dentro il container: /app/Parameter/parameter.yml)
+PARAMETER_FILE = os.environ.get(
+    "PARAMETER_FILE",
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "Parameter", "parameter.yml"
+    ),
+)
 
-# Se l'utente è già loggato, mandalo direttamente alla dashboard
-if st.session_state['logged_in']:
-    st.switch_page("pages/1_My_DTs.py")
 
-st.title("Access Control Center IoT")
+# legge parameter.yml e lo manda ad Authentication, che lo salva nel db Digital_Replica.
+# cache_resource: gira una volta sola finché il container è acceso.
+# Se va in errore non viene messa in cache, quindi riprova alla visita successiva.
+@st.cache_resource
+def upload_parameters():
+    with open(PARAMETER_FILE, "r", encoding="utf-8") as f:
+        parametri = yaml.safe_load(f) or {}
+    risposta = requests.post(
+        f"{AUTH_URL}/api/upload_parameters", json={"parameters": parametri}, timeout=5
+    )
+    risposta.raise_for_status()  # se la risposta non è 2xx solleva un errore
+    return True
 
-tab_login, tab_register = st.tabs(["Login", "Register"])
 
-# login, se corretto inviato alla pagina della registrazione della DR
-with tab_login:
-    st.subheader("Welcome Back")
-    login_email = st.text_input("Email", key="log_mail")
-    login_password = st.text_input("Password", type="password", key="log_pass")
-    if st.button("Login"):
-        if login_email and login_password:
-            response = requests.post(f"{AUTH_URL}/api/login", json={"email": login_email, "password": login_password})
-            if response.status_code == 200:
-                st.session_state['logged_in'] = True
-                st.session_state['user_name'] = response.json().get('name')
-                st.session_state['user_email'] = login_email 
-                st.switch_page("pages/1_My_DTs.py")  # Reindirizza alla pagina visualizzazione dei Digital Twin
-            else:
-                try:
-                    st.error(response.json().get('error', "Errore di login"))
-                except json.JSONDecodeError:
-                    st.error(f"Errore Server ({response.status_code})")
-        else:
-            st.warning("Please enter email and password")
+try:
+    upload_parameters()
+except Exception as e:
+    print(f"Parameters not loaded: {e}")  # finisce in "docker logs dashboard"
 
-# se l'utente non è registrato deve necessariamente registrarsi
-with tab_register:
-    st.subheader("New User")
-    reg_name = st.text_input("Name", key="reg_name")
-    reg_email = st.text_input("Email", key="reg_mail")
-    reg_password = st.text_input("Password", type="password", key="reg_pass")
-    
-    if st.button("Register"):
-        if reg_name and reg_email and reg_password:
-            payload = {"name": reg_name, "email": reg_email, "password": reg_password}
-            response = requests.post(f"{AUTH_URL}/api/register_user", json=payload)
-            if response.status_code == 201:
-                st.success("Registration completed! You can now log in.")
-            else:
-                try:
-                    st.error(response.json().get('error', "Error during registration"))
-                except json.JSONDecodeError:
-                    st.error(f"Server Error ({response.status_code})")
-        else:
-            st.warning("Please fill in all fields")
+
+# elenco di tutte le pagine: Streamlit apre solo quelle scritte qui
+# (tieni la TUA lista se è diversa: conta solo che ci siano tutte le pagine che usi)
+pagine = [
+    st.Page("welcome_page.py", default=True),
+    # pagine utente
+    st.Page("pages/1_Create_DT.py"),
+    st.Page("pages/1_My_DTs.py"),
+    st.Page("pages/1_Registration.py"),
+    st.Page("pages/2_Service.py"),
+    st.Page("pages/2_Set_Data.py"),
+    st.Page("pages/3_Ricerca_DR_associate.py"),
+    st.Page("pages/3_Send_Data.py"),
+    st.Page("pages/4_Gestione_Chiavi.py"),
+    st.Page("pages/4_Get_Data.py"),
+    st.Page("pages/New_Digital_Replica.py"),
+    # pagine admin
+    st.Page("Admin_panel/1_Overview.py"),
+    st.Page("Admin_panel/2_User.py"),
+    st.Page("Admin_panel/3_Digital_Twin.py"),
+    st.Page("Admin_panel/4_DR_Parameters.py"),
+    st.Page("Admin_panel/5_Parameter_requests.py"),
+    st.Page("Admin_panel/6_Service_review.py"),
+    st.Page("Admin_panel/7_Service_catalog.py"),
+]
+
+st.navigation(pagine, position="hidden").run()

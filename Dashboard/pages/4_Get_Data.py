@@ -1,19 +1,22 @@
 """Pagina che contiene l'interfaccia grafica relativa al modulo Get Data, che permette di interrogare
- il database per recuperare lo storico delle telemetrie o dati in tempo reale"""
+il database per recuperare lo storico delle telemetrie o dati in tempo reale"""
 
 import streamlit as st
 import requests
 
-if 'logged_in' not in st.session_state or not st.session_state['logged_in']:
-    st.switch_page("app.py")
-st.markdown("""<style>[data-testid="stSidebarNav"] {display: none;}</style>""", unsafe_allow_html=True)
+if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
+    st.switch_page("welcome_page.py")
+st.markdown(
+    """<style>[data-testid="stSidebarNav"] {display: none;}</style>""",
+    unsafe_allow_html=True,
+)
 AUTH_URL = "http://authentication:5005"
-user_email = st.session_state['user_email']
+user_email = st.session_state["user_email"]
 try:
     res_dts = requests.get(f"{AUTH_URL}/api/user_dts?email={user_email}")
     if res_dts.status_code == 200:
         dts = res_dts.json().get("dts", [])
-        
+
         if not dts:
             st.info("You have not assembled any Digital Twins yet. Create one below!")
             if st.button("Create a Digital Twin", type="primary"):
@@ -23,9 +26,9 @@ except Exception:
     st.error("Error connecting to the central database for reading DTs.")
     st.stop()
 st.sidebar.markdown("###  DT  Management")
-st.sidebar.page_link("app.py", label="Home")
-st.sidebar.page_link("pages/1_My_DTs.py", label="My DTs") 
-st.sidebar.page_link("pages/1_Create_DT.py", label="Create DT") 
+st.sidebar.page_link("welcome_page.py", label="Home")
+st.sidebar.page_link("pages/1_My_DTs.py", label="My DTs")
+st.sidebar.page_link("pages/1_Create_DT.py", label="Create DT")
 st.sidebar.page_link("pages/3_Ricerca_DR_associate.py", label="Ricerca DR associate")
 st.sidebar.page_link("pages/4_Gestione_Chiavi.py", label="Gestione Chiavi")
 st.sidebar.divider()
@@ -37,11 +40,11 @@ st.sidebar.page_link("pages/2_Set_Data.py", label="Set Data(MQTT)")
 
 # return button to go back
 st.sidebar.divider()
-st.sidebar.page_link("app.py", label=" Torna alla Home DT")
+st.sidebar.page_link("welcome_page.py", label=" Torna alla Home DT")
 st.sidebar.success(f" Hello, {st.session_state['user_name']}")
 if st.sidebar.button("Logout"):
-    st.session_state['logged_in'] = False
-    st.switch_page("app.py")
+    st.session_state["logged_in"] = False
+    st.switch_page("welcome_page.py")
 
 st.title(" Get Data")
 
@@ -51,7 +54,7 @@ with st.container(border=True):
     sender_id = c1.text_input("Collection Name", value="Condizionatore")
     col_name = c2.text_input("Repeat Collection Name", value="Condizionatore")
     mode = st.radio("Mode:", ["history", "realtime"], horizontal=True)
-    
+
     submit_getdata = st.button("Request Data", type="primary")
 
 if submit_getdata:
@@ -62,10 +65,10 @@ if submit_getdata:
         if r.status_code == 200:
             dati = r.json()
             st.success(" Data retrieved successfully.")
-            if mode == "history" and isinstance(dati.get('dati'), list):
-                st.dataframe(dati['dati'], use_container_width=True)
+            if mode == "history" and isinstance(dati.get("dati"), list):
+                st.dataframe(dati["dati"], use_container_width=True)
             else:
-                st.json(dati['dati'])
+                st.json(dati["dati"])
         elif r.status_code == 408:
             st.warning(" Timeout: No MQTT message received.")
         else:

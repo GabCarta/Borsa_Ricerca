@@ -1,0 +1,5 @@
+*.pptx
+*.pdf
+Microsoft VS Code/
+__pycache__/
+venv_dt/

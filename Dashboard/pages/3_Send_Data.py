@@ -4,17 +4,20 @@ che permette di inviare telemetrie ai dispositivi registrati"""
 import streamlit as st
 import requests
 
-if 'logged_in' not in st.session_state or not st.session_state['logged_in']:
-    st.switch_page("app.py")
-st.markdown("""<style>[data-testid="stSidebarNav"] {display: none;}</style>""", unsafe_allow_html=True)
+if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
+    st.switch_page("welcome_page.py")
+st.markdown(
+    """<style>[data-testid="stSidebarNav"] {display: none;}</style>""",
+    unsafe_allow_html=True,
+)
 
 AUTH_URL = "http://authentication:5005"
-user_email = st.session_state['user_email']
+user_email = st.session_state["user_email"]
 try:
     res_dts = requests.get(f"{AUTH_URL}/api/user_dts?email={user_email}")
     if res_dts.status_code == 200:
         dts = res_dts.json().get("dts", [])
-        
+
         if not dts:
             st.info("You have not assembled any Digital Twins yet. Create one below!")
             if st.button("Create a Digital Twin", type="primary"):
@@ -24,9 +27,9 @@ except Exception:
     st.error("Error connecting to the central database for reading DTs.")
     st.stop()
 st.sidebar.markdown("###  DT  Management")
-st.sidebar.page_link("app.py", label="Home")
-st.sidebar.page_link("pages/1_My_DTs.py", label="My DTs") 
-st.sidebar.page_link("pages/1_Create_DT.py", label="Create DT") 
+st.sidebar.page_link("welcome_page.py", label="Home")
+st.sidebar.page_link("pages/1_My_DTs.py", label="My DTs")
+st.sidebar.page_link("pages/1_Create_DT.py", label="Create DT")
 st.sidebar.page_link("pages/3_Ricerca_DR_associate.py", label="Ricerca DR associate")
 st.sidebar.page_link("pages/4_Gestione_Chiavi.py", label="Gestione Chiavi")
 st.sidebar.divider()
@@ -38,12 +41,11 @@ st.sidebar.page_link("pages/2_Set_Data.py", label="Set Data(MQTT)")
 
 # Tasto per tornare indietro
 st.sidebar.divider()
-st.sidebar.page_link("app.py", label="Turn back to Home DT")
+st.sidebar.page_link("welcome_page.py", label="Turn back to Home DT")
 st.sidebar.success(f" Hello, {st.session_state['user_name']}")
 if st.sidebar.button("Logout"):
-    st.session_state['logged_in'] = False
-    st.switch_page("app.py")
-
+    st.session_state["logged_in"] = False
+    st.switch_page("welcome_page.py")
 
 
 st.title(f"{' Send Data'}")
@@ -51,7 +53,9 @@ st.title(f"{' Send Data'}")
 with st.container(border=True):
     st.subheader("1. Authentication")
     col1, col2 = st.columns(2)
-    sender_id = col1.text_input("User ID", value=st.session_state['user_email'], disabled=True)
+    sender_id = col1.text_input(
+        "User ID", value=st.session_state["user_email"], disabled=True
+    )
     security_key = col2.text_input("Security Key", type="password")
 
     st.subheader("2. Target")
@@ -63,10 +67,14 @@ with st.container(border=True):
     valore_stato = c1.selectbox("State Value", ["ON", "OFF"], disabled=not invia_stato)
 
     invia_consumo = c2.checkbox("Include 'Consumption'", value=True)
-    valore_consumo = c2.number_input("Consumption (W)", value=45.5, step=0.1, disabled=not invia_consumo)
+    valore_consumo = c2.number_input(
+        "Consumption (W)", value=45.5, step=0.1, disabled=not invia_consumo
+    )
 
     st.markdown("#####  Custom Values")
-    num_extra = st.number_input("How many custom parameters?", min_value=0, max_value=20, value=0, step=1)
+    num_extra = st.number_input(
+        "How many custom parameters?", min_value=0, max_value=20, value=0, step=1
+    )
 
     custom_data = {}
     for i in range(int(num_extra)):
@@ -77,13 +85,16 @@ with st.container(border=True):
 
         if p_name and p_val:
             try:
-                if p_type == "float": custom_data[p_name] = float(p_val)
-                elif p_type == "int": custom_data[p_name] = int(p_val)
-                else: custom_data[p_name] = str(p_val)
+                if p_type == "float":
+                    custom_data[p_name] = float(p_val)
+                elif p_type == "int":
+                    custom_data[p_name] = int(p_val)
+                else:
+                    custom_data[p_name] = str(p_val)
             except ValueError:
                 st.error(f" Impossibile convertire '{p_val}' in {p_type}.")
 
-    st.write("") 
+    st.write("")
     btn_label = "Invia Comando"
     submit_btn = st.button(btn_label, type="primary")
 
@@ -91,19 +102,28 @@ if submit_btn:
     if not security_key:
         st.warning(" Security Key missing.")
     else:
-        payload = {"sender_id": sender_id, "security_key": security_key, "id": device_id}
-        if invia_stato: payload["stato"] = valore_stato
-        if invia_consumo: payload["consumo"] = float(valore_consumo)
-        for k, v in custom_data.items(): payload[k] = v
-
+        payload = {
+            "sender_id": sender_id,
+            "security_key": security_key,
+            "id": device_id,
+        }
+        if invia_stato:
+            payload["stato"] = valore_stato
+        if invia_consumo:
+            payload["consumo"] = float(valore_consumo)
+        for k, v in custom_data.items():
+            payload[k] = v
 
         try:
-            risposta = requests.post(f"http://digital-replica:5000/api/sendData", json=payload)
+            risposta = requests.post(
+                f"http://digital-replica:5000/api/sendData", json=payload
+            )
             if risposta.status_code == 200:
                 st.success(" Data sent successfully!")
                 st.json(risposta.json())
             else:
-                st.error(f" API Error: {risposta.status_code} - Details: {risposta.text}")
+                st.error(
+                    f" API Error: {risposta.status_code} - Details: {risposta.text}"
+                )
         except Exception:
             st.error(" Connection error.")
-           
