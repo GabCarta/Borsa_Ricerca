@@ -82,22 +82,15 @@ spec:
     spec:
       containers:
       - name: digital-replica
-        image: gcrta29/digital-replica:v10
+        image: gcrta29/digital-replica:v55
         ports:
         - containerPort: 5000
         env:
         - name: DATABASE_URL
-          value: "mongodb://mio-mongo:27017/DB_generico"
-        volumeMounts:
-        - name: profile-data
-          mountPath: /app/profile
-      volumes:
-      - name: profile-data
-        hostPath:
-         
-          path: /home/mclab/Desktop/Borsa/Digital_Replica/profile
-
-          type: DirectoryOrCreate
+          value: "mongodb://mio-mongo:27017/Digital_Replica"
+        - name: PORT
+          value: 5000
+       
 ---
 apiVersion: v1
 kind: Service
@@ -126,7 +119,7 @@ spec:
     spec:
       containers:
       - name: authentication
-        image: gcrta29/authentication:v4
+        image: gcrta29/authentication:v55
         ports:
         - containerPort: 5005
         env:
@@ -158,10 +151,10 @@ spec:
       labels:
         app: dashboard
     spec:
-      serviceAccountName : streamlit-admin
+      
       containers:
       - name: dashboard
-        image: gcrta29/dashboard:v30
+        image: gcrta29/dashboard:v103
         ports:
         - containerPort: 8501
 ---

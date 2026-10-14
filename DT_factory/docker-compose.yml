@@ -23,7 +23,7 @@ services:
 
   # Digital Replica
   digital-replica:
-    image: gcrta29/digital-replica:v10
+    image: gcrta29/digital-replica:v55
     container_name: digital-replica
     ports:
       - "5000:5000"
@@ -32,13 +32,13 @@ services:
     depends_on:
       - mio_mongo
     environment:
-      - DATABASE_URL=mongodb://mio-mongo:27017/DB_generico
+      - DATABASE_URL=mongodb://mio-mongo:27017/Digital_Replica
     networks:
       - rete_comune
 
   # Authentication
   authentication:
-    image: gcrta29/authentication:v4
+    image: gcrta29/authentication:v55
     container_name: authentication
     ports:
       - "5005:5005"
@@ -46,12 +46,14 @@ services:
       - mio_mongo
     environment:
       - DATABASE_URL=mongodb://mio-mongo:27017/DB_generico
+      - ADMIN_EMAIL=admin@dtplatform.local
+      - ADMIN_PASSWORD=admin
     networks:
       - rete_comune
 
   # Dashboard
   dashboard:
-    image: gcrta29/dashboard:v30
+    image: gcrta29/dashboard:v103
     container_name: dashboard
     ports:
       - "8501:8501"
