@@ -1,0 +1,28 @@
+id: dr_fbf3e5c7
+Profile:
+  id: dr_fbf3e5c7
+  name: Condizionatore
+  description: monitoraggio temperatura
+  owner: test
+database:
+  host: mio-mongo
+  port: 27017
+  db_name: Digital_Replica
+  dbname: Digital_Replica
+collections:
+  Condizionatore:
+    db_collection_name: Condizionatore
+    required_fields:
+      id: string
+    allowed_id:
+    - Condizionatore
+    allowed_values:
+      Energy: float
+      Power: float
+      Status: string
+      Temperature: float
+brokers:
+  mqtt:
+    broker_address: broker.mqttdashboard.com
+    port: 1883
+    topic_subscribe: topic_Condizionatore

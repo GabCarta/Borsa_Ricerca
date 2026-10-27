@@ -1,0 +1,25 @@
+services:
+  mio_mongo:
+    image: mongo:latest
+    container_name: mio_mongo
+    ports:
+      - "27018:27017"
+    networks:
+      - rete_comune
+
+  digital_replica:
+    build: .
+    container_name: digital_replica
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./:/app
+    networks:
+      - rete_comune
+    depends_on:
+      - mio_mongo
+
+networks:
+  rete_comune:
+    name: rete_comune_progetto 
+    

@@ -1,0 +1,49 @@
+Temperature : 
+  type: float
+  unit: "°C"
+
+Pressure:
+  type: float
+  unit: "hPa"
+
+Humidity:
+  type: float
+  unit: "%"
+
+Light:
+  type: float
+  unit: "lux"
+
+Co2:
+  type: float
+  unit: "ppm"
+
+Smoke:
+  type: float
+  unit: "ppm"
+
+Alarm:
+  type: string
+  unit: ""
+
+noise:
+  type: float
+  unit: "dB"
+
+Power:
+  type: float
+  unit: "W"
+
+Energy:
+  type: float
+  unit: "kWh"
+
+Status:
+  type: string
+  unit: ""
+
+Mode:
+  type: string
+  unit: ""
+
+
