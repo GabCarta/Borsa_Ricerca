@@ -15,8 +15,6 @@ if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
     st.switch_page("welcome_page.py")
 
 
-
-
 MQTT_BROKER = "broker.mqttdashboard.com"
 MQTT_PORT = 1883
 

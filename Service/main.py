@@ -1,10 +1,10 @@
 import datetime
 import time
-from default_service import threshold_check, min_max, prediction
+from default_service import threshold_check, min_max, average, prediction
 from pymongo import MongoClient
 import os
 
-db = MongoClient(os.envrion["DATABASE_URL"]).get_database()
+db = MongoClient(os.environ["DATABASE_URL"]).get_database()
 
 
 def salva_risultato(dr_id, service_id, risultato):
@@ -21,6 +21,7 @@ def salva_risultato(dr_id, service_id, risultato):
 SERVIZI = {
     "threshold_check": threshold_check,
     "min_max": min_max,
+    "average": average,
     "prediction": prediction,
 }
 

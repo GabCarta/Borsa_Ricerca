@@ -3,8 +3,8 @@ import re
 
 # impostazioni pod DT
 NAMESPACE = "default"
-DR_IMAGE = "gcrta29/digital-replica:v113"
-SERVICE_IMAGE = "gcrta29/service:v25"
+DR_IMAGE = "gcrta29/digital-replica:v114"
+SERVICE_IMAGE = "gcrta29/service:v27"  # nuova immagine con default_service riscritto
 # DR e servizi usano lo stesso db
 DATABASE_URL = "mongodb://mio-mongo:27017/Digital_Replica"
 INTERVAL = "10"
@@ -95,16 +95,25 @@ def spawn_digital_twin(pod_name, drs, services):
     )
 
     # il Service espone solo le porte delle DR (i servizi non hanno porta)
+    # NodePort: K3s assegna una porta 30000-32767 raggiungibile dal PC (dashboard locale)
     servizio_k8s = client.V1Service(
         api_version="v1",
         kind="Service",
         metadata=client.V1ObjectMeta(name=pod_name, labels=etichette),
-        spec=client.V1ServiceSpec(selector=etichette, ports=porte_service),
+        spec=client.V1ServiceSpec(
+            type="NodePort", selector=etichette, ports=porte_service
+        ),
     )
 
     try:
         apps_v1.create_namespaced_deployment(namespace=NAMESPACE, body=deployment)
-        core_v1.create_namespaced_service(namespace=NAMESPACE, body=servizio_k8s)
+        creato = core_v1.create_namespaced_service(
+            namespace=NAMESPACE, body=servizio_k8s
+        )
+        # salvo in ogni DR la NodePort assegnata (serve alla dashboard: http://VM:node_port)
+        assegnate = {p.port: p.node_port for p in creato.spec.ports}
+        for dr in drs:
+            dr["node_port"] = assegnate.get(dr["port"])
         return (
             True,
             f"DT '{pod_name}' created on K3s: {len(drs)} DR + {len(services)} services",

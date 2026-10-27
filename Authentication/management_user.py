@@ -19,14 +19,12 @@ def get_db():
     return client.get_default_database()
 
 
-"""
 def get_dt_db():
     env_url = os.environ.get("DATABASE_URL")
     if not env_url:
         raise ValueError("Not found DATABASE_URL environment variable")
     client = MongoClient(env_url)
     return client["Digital_Twin"]
-"""
 
 
 # Funzione per la registrazione di un nuovo utente

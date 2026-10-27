@@ -1,6 +1,2 @@
-
 pymongo
-PyYAML
-datetime
-requests
 numpy
