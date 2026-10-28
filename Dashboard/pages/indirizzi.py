@@ -24,7 +24,6 @@ def user_dts(email):
 
 
 # indirizzo della DR dentro il pod del suo DT: http://<IP VM>:<node_port>
-# Se la DR non e' in nessun DT, mostra un avviso e ferma la pagina.
 def dr_url(email, dr_id):
     try:
         dts = user_dts(email)

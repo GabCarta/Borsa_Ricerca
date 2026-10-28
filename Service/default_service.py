@@ -3,9 +3,8 @@ import os
 from pymongo import MongoClient
 import numpy as np
 
-# Funzioni "pure": ricevono solo dr_id e restituiscono un dict.
 # Le chiama main.py nel ciclo, che poi salva il dict in service_output.
-# Niente Flask/request: i parametri arrivano dalle variabili d'ambiente del container.
+# i parametri arrivano dalle variabili d'ambiente del container.
 
 db = MongoClient(os.environ["DATABASE_URL"], serverSelectionTimeoutMS=5000).get_database()
 

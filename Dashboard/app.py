@@ -7,7 +7,7 @@ from indirizzi import AUTH_URL
 import streamlit as st
 import yaml
 
-# file con la lista di partenza dei parametri (dentro il container: /app/Parameter/parameter.yml)
+# file con la lista di partenza dei parametri 
 PARAMETER_FILE = os.environ.get(
     "PARAMETER_FILE",
     os.path.join(
@@ -37,7 +37,6 @@ except Exception as e:
 
 
 # elenco di tutte le pagine: Streamlit apre solo quelle scritte qui
-# (tieni la TUA lista se è diversa: conta solo che ci siano tutte le pagine che usi)
 pagine = [
     st.Page("welcome_page.py", default=True),
     # pagine utente

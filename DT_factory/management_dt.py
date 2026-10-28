@@ -50,7 +50,7 @@ def create_dt():
     }
     try:
         db = get_dt_db()
-        db.DT.insert_one(dict(dt))  # dict(...) perche' insert_one aggiunge _id
+        db.DT.insert_one(dict(dt))
         return jsonify({"message": messaggio, "dt": dt}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -67,7 +67,7 @@ def get_user_dts():
         cursor = db.DT.find({"owner_email": email})
         dts = []
         for doc in cursor:
-            doc["_id"] = str(doc["_id"])  # Convertiamo l'ObjectId di Mongo in stringa
+            doc["_id"] = str(doc["_id"])  # Conversione ObjectId di Mongo in stringa
             dts.append(doc)
 
         return jsonify({"dts": dts}), 200

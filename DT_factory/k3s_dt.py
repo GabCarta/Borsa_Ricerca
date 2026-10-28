@@ -4,7 +4,7 @@ import re
 # impostazioni pod DT
 NAMESPACE = "default"
 DR_IMAGE = "gcrta29/digital-replica:v114"
-SERVICE_IMAGE = "gcrta29/service:v27"  # nuova immagine con default_service riscritto
+SERVICE_IMAGE = "gcrta29/service:v27"
 # DR e servizi usano lo stesso db
 DATABASE_URL = "mongodb://mio-mongo:27017/Digital_Replica"
 INTERVAL = "10"
@@ -39,7 +39,7 @@ def spawn_digital_twin(pod_name, drs, services):
     containers = []
     porte_service = []
 
-    # un container per ogni DR, ognuno con la sua porta
+    # creazione di un container per ogni DR creata, con porta che cambia in modo dinamico
     for i, dr in enumerate(drs):
         porta = dr["port"]
         containers.append(
@@ -61,12 +61,12 @@ def spawn_digital_twin(pod_name, drs, services):
             client.V1ServicePort(name=f"dr-{i + 1}", port=porta, target_port=porta)
         )
 
-    # un container per ogni servizio: niente porta, gira main.py in ciclo
+    # un container per ogni servizio gira main.py in ciclo, perchè sono delle funzioni
     tutte_le_dr = ",".join(dr["dr_id"] for dr in drs)
     for service_id in services:
         containers.append(
             client.V1Container(
-                name=f"svc-{nome_k8s(service_id)}",  # threshold_check -> svc-threshold-check
+                name=f"svc-{nome_k8s(service_id)}",  # nome servizio
                 image=SERVICE_IMAGE,
                 env=[
                     client.V1EnvVar(name="DATABASE_URL", value=DATABASE_URL),
@@ -94,7 +94,7 @@ def spawn_digital_twin(pod_name, drs, services):
         ),
     )
 
-    # il Service espone solo le porte delle DR (i servizi non hanno porta)
+    # il Service espone solo le porte delle DR
     # NodePort: K3s assegna una porta 30000-32767 raggiungibile dal PC (dashboard locale)
     servizio_k8s = client.V1Service(
         api_version="v1",
@@ -110,7 +110,7 @@ def spawn_digital_twin(pod_name, drs, services):
         creato = core_v1.create_namespaced_service(
             namespace=NAMESPACE, body=servizio_k8s
         )
-        # salvo in ogni DR la NodePort assegnata (serve alla dashboard: http://VM:node_port)
+        # salvo in ogni DR la NodePort assegnata (che viene usata dalla dashboard http://VM:node_port)
         assegnate = {p.port: p.node_port for p in creato.spec.ports}
         for dr in drs:
             dr["node_port"] = assegnate.get(dr["port"])

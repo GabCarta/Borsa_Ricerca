@@ -10,7 +10,7 @@ from flask import request, jsonify
 from pymongo import MongoClient
 
 
-# GET /api/service_output?dr_id=...&service_id=...&limit=20
+# funzione usata per restituire i risultati dei servizi
 def service_output():
     dr_id = request.args.get("dr_id")
     service_id = request.args.get("service_id")

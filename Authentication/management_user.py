@@ -172,43 +172,6 @@ def get_user_replicas():
     # crea un nuovo DT e lo salva nel database
 
 
-""""
-@app.route("/api/create_dt", methods=["POST"])
-def create_dt():
-    data = request.get_json()
-    if not data or not data.get("owner_email"):
-        return jsonify({"error": "Dati mancanti"}), 400
-
-    try:
-        db = get_dt_db()
-        db.DT.insert_one(data)  # Salva nella collezione "DT"
-        return jsonify({"message": "DT salvato con successo"}), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-"""
-"""
-# funzione usata per ottenere tutti i DT associati a un utente
-@app.route("/api/user_dts", methods=["GET"])
-def get_user_dts():
-    email = request.args.get("email")
-    if not email:
-        return jsonify({"error": "Email mancante"}), 400
-
-    try:
-        db = get_dt_db()
-        cursor = db.DT.find({"owner_email": email})
-        dts = []
-        for doc in cursor:
-            doc["_id"] = str(doc["_id"])  # Convertiamo l'ObjectId di Mongo in stringa
-            dts.append(doc)
-
-        return jsonify({"dts": dts}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-"""
-
-
 # funzione usata per ottenere tutti i servizi disponibili
 @app.route("/api/services", methods=["GET"])
 def get_services():
@@ -223,38 +186,3 @@ def get_services():
         return jsonify({"services": services}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
-"""
-# Funzione per la gestione della registrazione di un nuovo dispositivo
-@app.route('/api/link_replica', methods=['POST'])
-def link_replica():
-    data = request.get_json()
-    email = data.get('email')
-    device_id = data.get('device_id') # Questo ora può essere sempre uguale (es. la mail)
-    collezione = data.get('collezione')
-    chiave = data.get('key')
-    struttura_completa = data.get('struttura_completa')
-
-    if not all([email, device_id, collezione, chiave]):
-        return jsonify({"error": "missing data"}), 400
-
-    try:
-        db = get_db()
-        
-       # creazione del dizionario per il nuovo dispositivo.
-        nuovo_dispositivo = {
-            "device_id": device_id,
-            "owner_email": email,  
-            "collezione": collezione,
-            "key": chiave,
-            "struttura_completa": struttura_completa
-        }
-      
-        db.registered_devices.insert_one(nuovo_dispositivo)
-        
-        return jsonify({"message": "Device added to list successfully!"}), 201
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-"""

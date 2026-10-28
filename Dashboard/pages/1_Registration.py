@@ -192,7 +192,7 @@ with col_main:
             dr_name = st.text_input("Name", placeholder="conditioner")
             description = st.text_input("Description", placeholder="Description")
 
-        # card Parameters: lista scorrevole con la rotella del mouse
+        #  lista scorrevole con la rotella del mouse
         with st.container(key="card_params"):
             st.markdown(
                 "<div class='box-label'>Parameters (from list)</div>",

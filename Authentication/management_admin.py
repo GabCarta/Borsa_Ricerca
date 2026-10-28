@@ -19,12 +19,12 @@ def get_dr_db():
     return client["Digital_Replica"]
 
 
-# nome esatto ma senza distinzione tra maiuscole e minuscole ("co2" == "Co2")
+# nome esatto ma non care sensitive
 def same_name(name):
     return {"$regex": f"^{re.escape(name)}$", "$options": "i"}
 
 
-# function to count the number of different request
+# funzione usata per contare il numero di richieste da parte dell'utente
 @app.route("/count_request", methods=["GET"])
 def statistic():
     email = request.args.get("email")
@@ -59,7 +59,7 @@ def statistic():
         return jsonify({"error": str(e)}), 500
 
 
-# Receives the parameter list from the Dashboard and saves it into the database, and add new parameters
+# ricezione della lista dei parametri usati per la creazione delle DR, salvati poi nel Db
 @app.route("/upload_parameters", methods=["POST"])
 def upload_parameters():
     data = request.get_json()
@@ -68,7 +68,7 @@ def upload_parameters():
     try:
         dr_db = get_dr_db()
         for name, info in data["parameters"].items():
-            # upsert: se c'è già un parametro con questo nome non fa niente, altrimenti lo crea
+            #  se c'è già un parametro con questo nome non fa niente, altrimenti lo crea
             dr_db.Parameters.update_one(
                 {"name": name},
                 {
@@ -85,7 +85,7 @@ def upload_parameters():
         return jsonify({"error": str(e)}), 500
 
 
-# Returns all the parameters saved in the database.
+# Funzione per mettere a disposisizione i parametri salvati nel db.
 @app.route("/parameters", methods=["GET"])
 def get_parameters():
     try:
@@ -98,7 +98,7 @@ def get_parameters():
         return jsonify({"error": str(e)}), 500
 
 
-# list of request to add new parameters
+# lista delle richieste per nuovi parametri
 @app.route("/parameter_requests", methods=["GET"])
 def get_parameter_requests():
     email = request.args.get("email")
@@ -117,7 +117,7 @@ def get_parameter_requests():
         return jsonify({"error": str(e)}), 500
 
 
-# function to accept or not a new parameter
+# funzione per accettare o declinare le richieste di nuovi parametri
 @app.route("/review_parameter_request", methods=["POST"])
 def review_parameter_request():
     data = request.get_json()
@@ -137,7 +137,7 @@ def review_parameter_request():
         if parameter["status"] != "pending":
             return jsonify({"error": "Request already " + parameter["status"]}), 409
 
-        # save new parameter
+        # salva parametri
         if decision == "accepted":
             if dr_db.Parameters.find_one({"name": same_name(parameter["name"])}):
                 return jsonify({"error": "Parameter already in the list"}), 409

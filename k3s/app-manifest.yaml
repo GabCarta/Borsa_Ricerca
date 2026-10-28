@@ -1,14 +1,7 @@
-# =====================================================================
 # Manifest di avvio della piattaforma DT su K3s.
-# Solo cio' che deve esistere prima: Mongo, Authentication, DT_factory (+ permessi)
-# e un pod Digital_Replica sempre acceso solo per la registrazione delle DR.
-# I DT (DR + servizi) li crea la DT_factory; la dashboard gira sul pc.
-# Avvio:  sudo k3s kubectl apply -f k3s/app-manifest.yaml
-# =====================================================================
 
-# ---------------------------------------------------------------------
+
 # DATABASE: MongoDB condiviso (DB_generico, Digital_Replica, Digital_Twin)
-# ---------------------------------------------------------------------
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -31,7 +24,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mio-mongo            # mongodb://mio-mongo:27017 (solo dentro il cluster)
+  name: mio-mongo            # mongodb://mio-mongo:27017 
 spec:
   selector:
     app: mio-mongo
@@ -40,9 +33,7 @@ spec:
     targetPort: 27017
 
 ---
-# ---------------------------------------------------------------------
-# AUTHENTICATION: utenti, login, DR dell'utente
-# ---------------------------------------------------------------------
+# Autenthication, come pod per utilizzare le API relative agli utenti
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -58,7 +49,7 @@ spec:
     spec:
       containers:
       - name: authentication
-        image: gcrta29/authentication:v70    # METTI IL TUO TAG
+        image: gcrta29/authentication:v70    
         ports:
         - containerPort: 5005
         env:
@@ -70,7 +61,7 @@ kind: Service
 metadata:
   name: authentication
 spec:
-  type: NodePort             # raggiungibile dal pc: http://<IP VM>:30505
+  type: NodePort             
   selector:
     app: authentication
   ports:
@@ -79,9 +70,8 @@ spec:
     nodePort: 30505
 
 ---
-# ---------------------------------------------------------------------
+
 # DT_FACTORY: crea i DT su K3s e legge i risultati dei servizi
-# ---------------------------------------------------------------------
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -111,7 +101,7 @@ kind: Service
 metadata:
   name: dt-factory
 spec:
-  type: NodePort             # raggiungibile dal pc: http://<IP VM>:30503
+  type: NodePort            
   selector:
     app: dt-factory
   ports:
@@ -120,10 +110,10 @@ spec:
     nodePort: 30503
 
 ---
-# ---------------------------------------------------------------------
+
 # DR-REGISTRATION: Digital_Replica sempre accesa, usata solo per
-# /api/registration (le DR vere nascono dentro i DT)
-# ---------------------------------------------------------------------
+# /api/registration,, i pod nascono dopo la creazione del Digital Twin
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -154,7 +144,7 @@ kind: Service
 metadata:
   name: dr-registration
 spec:
-  type: NodePort             # raggiungibile dal pc: http://<IP VM>:30500/api/registration
+  type: NodePort             
   selector:
     app: dr-registration
   ports:
@@ -163,10 +153,10 @@ spec:
     nodePort: 30500
 
 ---
-# ---------------------------------------------------------------------
+
 # PERMESSI DELLA DT_FACTORY: puo' creare/leggere/cancellare
 # Deployment, Service e pod nel namespace default
-# ---------------------------------------------------------------------
+
 apiVersion: v1
 kind: ServiceAccount
 metadata:
