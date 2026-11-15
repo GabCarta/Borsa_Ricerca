@@ -5,7 +5,7 @@ e il controllo della chiave nelle richieste successive.
 
 from cryptography.fernet import Fernet
 from flask import Flask
-from database import db_instance
+from database import db_instance, DR_ID
 
 app = Flask(__name__)
 
@@ -22,16 +22,18 @@ def check_key(sender_id, received_key):
     if not sender_id or not received_key:
         return False
 
-    db, _ = db_instance.get_connection()
-    if db is None:
-        print("Errore: database non raggiungibile")
-        return False
-
-    # cerco nel db il documento della DR con quell'id
-    dr = db["registered_devices"].find_one({"id": sender_id})
+    # profilo della DR con quell'id: nel pod del DT viene dalla ConfigMap e dal Secret,
+    # e c'e' solo se sender_id e' la DR di questo container
+    dr = db_instance.get_profile(sender_id)
     if dr is None:
         print(f"Errore: nessuna DR registrata con id {sender_id}")
         return False
 
     # confronto la chiave ricevuta con quella salvata in registrazione
-    return dr.get("security_key") == received_key.strip()
+    return bool(dr.get("security_key")) and dr.get("security_key") == received_key.strip()
+
+
+# nel pod del DT ogni container (e quindi ogni porta) e' una sola DR:
+# le richieste per un'altra DR vanno rifiutate
+def is_my_dr(sender_id):
+    return bool(DR_ID) and sender_id == DR_ID

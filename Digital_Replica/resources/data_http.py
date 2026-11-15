@@ -31,6 +31,8 @@ def send_data():
 
         if not id_dispositivo or not sender_id:
             return jsonify({"State": "Error: Missing id or sender_id"}), 400
+        if not security.is_my_dr(sender_id):
+            return jsonify({"State": f"Error: this port belongs to Digital Replica {security.DR_ID}"}), 403
 
         # connessione al db
         db, _ = db_instance.get_connection()
@@ -53,7 +55,7 @@ def send_data():
         nome_collezione_target = profile.get("collection")
         valori_ok, errore = valida_dati(profile, temp_dict)
         if not valori_ok:
-            return jsonify({"State": "Invalid data"({errore})}), 400
+            return jsonify({"State": f"Invalid data ({errore})"}), 400
         temp_dict["dr_id"] = sender_id
         temp_dict["orario_invio"] = datetime.datetime.now()
         try:
@@ -81,6 +83,8 @@ def get_data():
     sender_id = request.args.get("sender_id")
     if not sender_id:
         return jsonify({"State": "Error:missing sender_id"}), 400
+    if not security.is_my_dr(sender_id):
+        return jsonify({"State": f"Error: this port belongs to Digital Replica {security.DR_ID}"}), 403
 
     db, config = db_instance.get_connection()
     if db is None:
@@ -144,8 +148,8 @@ def get_data():
                 broker_address, broker_port, 60
             )  # connect to broker 60 seconds timeout
 
-            # Il topic ora si compone usando sender_id
-            topic = f"{topic_base}/{sender_id}"
+            # stesso topic su cui pubblica setData (topic_base/id del dispositivo)
+            topic = f"{topic_base}/{nome_collezione}"
             client.subscribe(topic)  # subscribe to topic
             client.loop_start()  # sent to server and wait for message
 

@@ -1,0 +1,72 @@
+# GESTIONE della piattaforma, FUORI da Kubernetes (sulla VM con K3s, con docker compose).
+# Nel cluster K3s ci sono solo i DT, creati dalla factory.
+#
+#   cp .env.esempio .env      e metti IP della VM, segreto e admin
+#   docker compose up -d --build
+#
+# Dashboard: http://<IP VM>:8501
+
+services:
+  # Mongo della piattaforma: utenti, profili delle DR, registry dei DT.
+  # I DT NON lo usano: ognuno ha il suo mongo dentro il pod.
+  mongo:
+    image: mongo:7.0
+    ports:
+      - "27018:27017"           # per Compass dal pc
+    volumes:
+      - mongo-piattaforma:/data/db
+
+  authentication:
+    build: ../Authentication
+    ports:
+      - "5005:5005"
+    environment:
+      - DATABASE_URL=mongodb://mongo:27017/DB_generico
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - PLATFORM_SECRET=${PLATFORM_SECRET}   # firma i token del login
+    depends_on:
+      - mongo
+
+  # Digital_Replica senza DR_ID: fa solo /api/registration sul Mongo della piattaforma
+  dr-registration:
+    build: ../Digital_Replica
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - DATABASE_URL=mongodb://mongo:27017/Digital_Replica
+    depends_on:
+      - mongo
+
+  dt-factory:
+    build: ../DT_factory
+    ports:
+      - "5003:5003"
+    environment:
+      - DATABASE_URL=mongodb://mongo:27017
+      - PLATFORM_SECRET=${PLATFORM_SECRET}   # verifica i token del login
+      - KUBECONFIG=/kube/dt-factory.yaml     # creato da k3s/crea_kubeconfig.sh
+      - DT_PUBLIC_HOST=${VM_IP}              # indirizzo delle NodePort dei DT
+      - DR_IMAGE=${DR_IMAGE}
+      - SERVICE_IMAGE=${SERVICE_IMAGE}
+    volumes:
+      - ./kubeconfig:/kube:ro
+    depends_on:
+      - mongo
+
+  dashboard:
+    build: ../Dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      - AUTH_URL=http://authentication:5005
+      - FACTORY_URL=http://dt-factory:5003
+      - DR_REG_URL=http://dr-registration:5000
+    depends_on:
+      - authentication
+      - dt-factory
+      - dr-registration
+
+volumes:
+  mongo-piattaforma:

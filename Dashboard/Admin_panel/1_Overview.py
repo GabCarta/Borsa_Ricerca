@@ -14,8 +14,7 @@ st.set_page_config(
 
 HOME = "welcome_page.py"
 THIS_PAGE = "Admin_panel/1_Overview.py"
-FACTORY_URL = os.environ.get("FACTORY_URL", "http://192.167.133.45:30503")
-AUTH_URL = os.environ.get("AUTH_URL", "http://192.167.133.45:30505")
+from indirizzi import AUTH_URL  # indirizzi dei componenti di gestione
 
 if not st.session_state.get("logged_in"):
     st.switch_page(HOME)

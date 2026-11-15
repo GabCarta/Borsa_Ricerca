@@ -1,191 +1,73 @@
-# Manifest di avvio della piattaforma DT su K3s.
+# Permessi della DT_factory, che gira FUORI dal cluster (docker-compose di gestione).
+# Nel cluster ci sono solo i DT, un namespace per utente (user-<id>): la factory
+# deve poter lavorare in tutti, quindi ClusterRole, limitato a quello che serve.
+#
+#   sudo k3s kubectl apply -f k3s/app-manifest.yaml
+#   sudo bash k3s/crea_kubeconfig.sh <IP della VM>   -> gestione/kubeconfig/dt-factory.yaml
 
-
-# DATABASE: MongoDB condiviso (DB_generico, Digital_Replica, Digital_Twin)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mio-mongo
-spec:
-  selector:
-    matchLabels:
-      app: mio-mongo
-  template:
-    metadata:
-      labels:
-        app: mio-mongo
-    spec:
-      containers:
-      - name: mongo
-        image: mongo:7.0
-        ports:
-        - containerPort: 27017
----
 apiVersion: v1
-kind: Service
+kind: Namespace
 metadata:
-  name: mio-mongo            # mongodb://mio-mongo:27017 
-spec:
-  selector:
-    app: mio-mongo
-  ports:
-  - port: 27017
-    targetPort: 27017
-
+  name: dt-system            # contiene solo l'account della factory, nessun pod
 ---
-# Autenthication, come pod per utilizzare le API relative agli utenti
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: authentication
-spec:
-  selector:
-    matchLabels:
-      app: authentication
-  template:
-    metadata:
-      labels:
-        app: authentication
-    spec:
-      containers:
-      - name: authentication
-        image: gcrta29/authentication:v70    
-        ports:
-        - containerPort: 5005
-        env:
-        - name: DATABASE_URL
-          value: "mongodb://mio-mongo:27017/DB_generico"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: authentication
-spec:
-  type: NodePort             
-  selector:
-    app: authentication
-  ports:
-  - port: 5005
-    targetPort: 5005
-    nodePort: 30505
-
----
-
-# DT_FACTORY: crea i DT su K3s e legge i risultati dei servizi
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: dt-factory
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: dt-factory
-  template:
-    metadata:
-      labels:
-        app: dt-factory
-    spec:
-      serviceAccountName: dt-factory     # permessi definiti in fondo
-      containers:
-      - name: dt-factory
-        image: gcrta29/dt-factory:v2     
-        ports:
-        - containerPort: 5003
-        env:
-        - name: DATABASE_URL
-          value: "mongodb://mio-mongo:27017/Digital_Twin"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: dt-factory
-spec:
-  type: NodePort            
-  selector:
-    app: dt-factory
-  ports:
-  - port: 5003
-    targetPort: 5003
-    nodePort: 30503
-
----
-
-# DR-REGISTRATION: Digital_Replica sempre accesa, usata solo per
-# /api/registration,, i pod nascono dopo la creazione del Digital Twin
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: dr-registration
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: dr-registration
-  template:
-    metadata:
-      labels:
-        app: dr-registration
-    spec:
-      containers:
-      - name: digital-replica
-        image: gcrta29/digital-replica:v114    
-        ports:
-        - containerPort: 5000
-        env:
-        - name: PORT
-          value: "5000"
-        - name: DATABASE_URL
-          value: "mongodb://mio-mongo:27017/Digital_Replica"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: dr-registration
-spec:
-  type: NodePort             
-  selector:
-    app: dr-registration
-  ports:
-  - port: 5000
-    targetPort: 5000
-    nodePort: 30500
-
----
-
-# PERMESSI DELLA DT_FACTORY: puo' creare/leggere/cancellare
-# Deployment, Service e pod nel namespace default
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: dt-factory
-  namespace: default
+  namespace: dt-system
+---
+# token dell'account, usato nel kubeconfig della factory
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dt-factory-token
+  namespace: dt-system
+  annotations:
+    kubernetes.io/service-account.name: dt-factory
+type: kubernetes.io/service-account-token
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
-  name: crea-dt
-  namespace: default
+  name: dt-factory
 rules:
+# namespace degli utenti: creati al primo DT (o all'approvazione), cancellati con l'utente
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list", "create", "delete"]
+# pod del DT: Deployment, avvio/arresto con scale
 - apiGroups: ["apps"]
   resources: ["deployments"]
-  verbs: ["get", "list", "create", "delete"]
+  verbs: ["get", "list", "create", "delete", "patch"]
+- apiGroups: ["apps"]
+  resources: ["deployments/scale"]
+  verbs: ["get", "patch", "update"]
+# oggetti del DT: porte, profili e configurazione, chiavi, volume del db, quota
 - apiGroups: [""]
-  resources: ["services", "pods"]
+  resources: ["services", "configmaps", "secrets", "persistentvolumeclaims", "resourcequotas"]
+  verbs: ["get", "list", "create", "delete"]
+# chiamate alle API dei servizi del DT, che non sono esposti fuori dal cluster
+- apiGroups: [""]
+  resources: ["services/proxy"]
+  verbs: ["get", "create"]
+# stato e log dei container
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list"]
+# isolamento tra i namespace degli utenti
+- apiGroups: ["networking.k8s.io"]
+  resources: ["networkpolicies"]
   verbs: ["get", "list", "create", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
-  name: dt-factory-crea-dt
-  namespace: default
+  name: dt-factory
 subjects:
 - kind: ServiceAccount
   name: dt-factory
-  namespace: default
+  namespace: dt-system
 roleRef:
-  kind: Role
-  name: crea-dt
+  kind: ClusterRole
+  name: dt-factory
   apiGroup: rbac.authorization.k8s.io

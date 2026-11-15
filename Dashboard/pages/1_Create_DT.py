@@ -1,6 +1,6 @@
 import streamlit as st
 import requests
-from indirizzi import AUTH_URL, FACTORY_URL
+from indirizzi import AUTH_URL, errore, factory
 import os
 
 
@@ -16,6 +16,7 @@ st.markdown(
 st.sidebar.markdown("###  DT  Management")
 st.sidebar.page_link("welcome_page.py", label="Home")
 st.sidebar.page_link("pages/1_My_DTs.py", label="My DTs")
+st.sidebar.page_link("pages/5_Public_DTs.py", label="Public DTs")
 st.sidebar.page_link("pages/1_Create_DT.py", label="Create DT")
 st.sidebar.page_link("pages/3_Ricerca_DR_associate.py", label="Ricerca DR associate")
 st.sidebar.page_link("pages/4_Gestione_Chiavi.py", label="Gestione Chiavi")
@@ -35,9 +36,17 @@ if st.sidebar.button("Logout"):
 
 user_email = st.session_state["user_email"]
 
+# categorie dei DT: per ora fisse, poi le gestira' l'admin
+CATEGORIE = ["Home", "Building", "Industry", "Agriculture", "Energy", "Environment", "Health", "Other"]
+TIPI_NUMERICI = ("float", "int")
+
+if "servizi_dt" not in st.session_state:
+    st.session_state["servizi_dt"] = []  # istanze di servizio aggiunte al DT
+
 st.title(" Assemble a New Digital Twin")
 st.markdown(
-    "Choose one or more **Digital Replicas** and associate them with one or more **Services**."
+    "Fill in the details, choose the **Digital Replicas** and add the **Services**, "
+    "each one with its inputs and parameters."
 )
 
 replicas = []
@@ -49,15 +58,32 @@ with st.spinner("Loading available DRs..."):
     except Exception:
         st.error("Error connecting to the central database.")
 
-# servizi predefiniti della piattaforma (quelli dentro gcrta29/service)
-servizi_db = [
-    {"service_id": "threshold_check", "Name": "Threshold check"},
-    {"service_id": "min_max", "Name": "Min / Max"},
-    {"service_id": "prediction", "Name": "Prediction (ML)"},
-]
+# catalogo dei servizi predefiniti, con i parametri che si possono impostare
+try:
+    r = factory("GET", "/api/service_catalog")
+    catalogo = r.json().get("services", {}) if r.status_code == 200 else {}
+except Exception as e:
+    st.error(f"Error connecting to DT_factory: {e}")
+    st.stop()
 
 with st.container(border=True):
-    st.subheader("1. Choose one or more Digital Replicas (DR)")
+    st.subheader("1. Details")
+    c1, c2 = st.columns(2)
+    nome_dt = c1.text_input(
+        "Name", placeholder="e.g., Hydraulic Pump - Section A"
+    )
+    categoria = c2.selectbox("Category", CATEGORIE)
+    descrizione = st.text_input("Description (optional)")
+    c3, c4 = st.columns(2)
+    posizione = c3.text_input("Location (optional)", placeholder="e.g., Cagliari, building B")
+    visibilita = c4.radio("Visibility", ["private", "public"], horizontal=True)
+    st.caption(
+        f"Owner: {st.session_state.get('user_name')} ({user_email}). "
+        "The creation date is set by the platform."
+    )
+
+with st.container(border=True):
+    st.subheader("2. Choose one or more Digital Replicas (DR)")
 
     if not replicas:
         st.warning("Your inventory is empty. You have no available Digital Replicas.")
@@ -66,7 +92,7 @@ with st.container(border=True):
         st.stop()
 
     opzioni_dr = {
-        f" {rep.get('collezione')} (ID: {rep.get('device_id')})": rep
+        f" {rep.get('name') or rep.get('collezione')} (ID: {rep.get('device_id')})": rep
         for rep in replicas
     }
     scelte_dr = st.multiselect("Select from your library:", list(opzioni_dr.keys()))
@@ -75,65 +101,114 @@ with st.container(border=True):
     # porta assegnata in automatico dalla factory, nell'ordine di scelta
     for i, dr in enumerate(dr_selezionate):
         porta = 5000 if i == 0 else 5001 + i
-        st.caption(f"{dr.get('collezione')} -> port {porta}")
+        st.caption(f"{dr.get('name')} -> port {porta}")
 
     if st.button("If you don't find the DR you're looking for, create a new one..."):
         st.switch_page("pages/1_Registration.py")
 
-with st.container(border=True):
-    st.subheader("2. Associate one or more Services")
-    opzioni_serv = {srv["Name"]: srv for srv in servizi_db}
-    scelte_servizi = st.multiselect(
-        "Select the modules to link:", list(opzioni_serv.keys())
-    )
-    servizi_selezionati = [opzioni_serv[nome] for nome in scelte_servizi]
-    st.caption("Each service runs on every DR of the Digital Twin.")
+# input possibili: i parametri numerici delle DR scelte
+input_possibili = {
+    f"{dr.get('name')} / {par}": {"dr_id": dr.get("device_id"), "parameter": par}
+    for dr in dr_selezionate
+    for par, tipo in (dr.get("parameters") or {}).items()
+    if tipo in TIPI_NUMERICI
+}
+# tolgo dai servizi gli input di DR non piu' scelte
+for srv in st.session_state["servizi_dt"]:
+    srv["inputs"] = [x for x in srv["inputs"] if x in input_possibili.values()]
+
+
+@st.dialog("Add service")
+def add_service(service_id):
+    voce = catalogo[service_id]
+    st.caption(voce.get("description", ""))
+    nome = st.text_input("Name in the DT", value=voce["name"])
+    st.markdown("**Input data** (parameters of the DRs of this DT)")
+    scelti = st.multiselect("Selected inputs", list(input_possibili.keys()))
+    st.markdown("**Service parameters**")
+    params = {}
+    for p in voce["params"]:
+        if p["type"] == "int":
+            params[p["name"]] = int(st.number_input(
+                p["label"], value=int(p["default"]), min_value=int(p.get("min", 0)), step=1))
+        else:
+            params[p["name"]] = st.number_input(p["label"], value=float(p["default"]))
+    if st.button("Add", type="primary"):
+        if len(scelti) < voce.get("min_inputs", 0):
+            st.warning(f"Choose at least {voce['min_inputs']} input.")
+            return
+        st.session_state["servizi_dt"].append(
+            {
+                "service_id": service_id,
+                "name": nome.strip() or voce["name"],
+                "inputs": [input_possibili[x] for x in scelti],
+                "params": params,
+            }
+        )
+        st.rerun()
+
 
 with st.container(border=True):
-    st.subheader("3. Assign a Name")
-    nome_dt = st.text_input(
-        "Give this Digital Twin a unique name",
-        placeholder="e.g., Hydraulic Pump - Section A",
-    )
+    st.subheader("3. Add one or more Services")
+    if not dr_selezionate:
+        st.info("Choose the Digital Replicas first: the services take their inputs from them.")
+    else:
+        colonne = st.columns(2)
+        for i, (service_id, voce) in enumerate(catalogo.items()):
+            col = colonne[i % 2]
+            col.markdown(f"**{voce['name']}**  \n<span style='color:#6B7280'>{voce.get('description', '')}</span>",
+                         unsafe_allow_html=True)
+            if col.button("Add", key=f"add_{service_id}"):
+                add_service(service_id)
+
+    st.markdown("**Services in this Digital Twin**")
+    if not st.session_state["servizi_dt"]:
+        st.caption("No services added yet. The same service can be added more than once.")
+    nomi_input = {(v["dr_id"], v["parameter"]): k for k, v in input_possibili.items()}
+    for i, srv in enumerate(list(st.session_state["servizi_dt"])):
+        c_testo, c_tolto = st.columns([8, 1], vertical_alignment="center")
+        ingressi = ", ".join(nomi_input.get((x["dr_id"], x["parameter"]), "?") for x in srv["inputs"]) or "no inputs"
+        parametri = ", ".join(f"{k}={v}" for k, v in srv["params"].items())
+        c_testo.write(f"{i + 1}. **{srv['name']}** ({catalogo.get(srv['service_id'], {}).get('name')}) - {ingressi} - {parametri}")
+        if c_tolto.button("Remove", key=f"rm_{i}"):
+            st.session_state["servizi_dt"].pop(i)
+            st.rerun()
 
 st.write("")
 
 if st.button(
     "Assemble and Save Digital Twin", type="primary", use_container_width=True
 ):
-    if not dr_selezionate:
-        st.warning("You must select at least one Digital Replica.")
-    elif not servizi_selezionati:
-        st.warning("You must select at least one Service.")
-    elif not nome_dt:
+    servizi = st.session_state["servizi_dt"]
+    if not nome_dt.strip():
         st.warning("You must enter a name for the Digital Twin before saving it.")
+    elif not dr_selezionate:
+        st.warning("You must select at least one Digital Replica.")
+    elif any(len(s["inputs"]) < catalogo.get(s["service_id"], {}).get("min_inputs", 0) for s in servizi):
+        st.warning("A service has lost its inputs: add them again or remove it.")
     else:
+        # l'utente lo ricava la factory dal token del login
         payload_dt = {
-            "owner_email": user_email,
-            "dt_name": nome_dt,
-            "drs": [
-                {"dr_id": dr.get("device_id"), "dr_name": dr.get("collezione")}
-                for dr in dr_selezionate
-            ],
-            "services": [
-                {"service_id": srv.get("service_id"), "service_name": srv.get("Name")}
-                for srv in servizi_selezionati
-            ],
+            "dt_name": nome_dt.strip(),
+            "description": descrizione,
+            "category": categoria,
+            "location": posizione,
+            "visibility": visibilita,
+            "drs": [{"dr_id": dr.get("device_id")} for dr in dr_selezionate],
+            "services": servizi,
         }
 
         cambio_pagina_autorizzato = False
 
         with st.spinner("Saving to the database and deploying on K3s."):
             try:
-                res_create = requests.post(
-                    f"{FACTORY_URL}/api/create_dt", json=payload_dt
-                )
+                res_create = factory("POST", "/api/create_dt", json=payload_dt, timeout=60)
                 if res_create.status_code == 201:
                     st.success("Build and save successful!")
+                    st.session_state["servizi_dt"] = []
                     cambio_pagina_autorizzato = True
                 else:
-                    errore = res_create.json().get("error", res_create.status_code)
-                    st.error(f"Error while creating the DT: {errore}")
+                    st.error(f"Error while creating the DT: {errore(res_create)}")
             except Exception as e:
                 st.error(f"Errore durante la creazione: {e}")
 

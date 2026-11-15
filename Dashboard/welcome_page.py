@@ -8,8 +8,7 @@ st.set_page_config(
     page_title="DT Platform", layout="wide", initial_sidebar_state="collapsed"
 )
 
-FACTORY_URL = os.environ.get("FACTORY_URL", "http://192.167.133.45:30503")
-AUTH_URL = os.environ.get("AUTH_URL", "http://192.167.133.45:30505")
+from indirizzi import AUTH_URL  # indirizzi dei componenti di gestione
 
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
@@ -71,13 +70,18 @@ header[data-testid="stHeader"] {{display: none;}}
 # ---------- PASSO 6: popup di Log in ----------
 @st.dialog("Log in")
 def login_dialog():
-    email = st.text_input("Email")
-    password = st.text_input("Password", type="password")
+    # dentro un form i valori arrivano tutti insieme quando premi "Log in"
+    with st.form("login_form", border=False):
+        email = st.text_input("Email").strip()
+        password = st.text_input("Password", type="password")
 
-    b_cancel, b_login, _ = st.columns([1, 1, 2])
-    if b_cancel.button("Cancel", use_container_width=True):
+        b_cancel, b_login, _ = st.columns([1, 1, 2])
+        annulla = b_cancel.form_submit_button("Cancel", use_container_width=True)
+        accedi = b_login.form_submit_button("Log in", type="primary", use_container_width=True)
+
+    if annulla:
         st.rerun()  # chiude il popup
-    if b_login.button("Log in", type="primary", use_container_width=True):
+    if accedi:
         if not email or not password:
             st.warning("Please enter email and password")
         else:
@@ -90,6 +94,9 @@ def login_dialog():
                     st.session_state["user_name"] = risposta.json().get("name")
                     st.session_state["user_email"] = email
                     st.session_state["user_role"] = risposta.json().get("role", "user")
+                    st.session_state["user_id"] = risposta.json().get("user_id")
+                    # token firmato da Authentication: la factory lo vuole in ogni chiamata
+                    st.session_state["token"] = risposta.json().get("token")
                     if st.session_state["user_role"] == "admin":
                         st.switch_page("Admin_panel/1_Overview.py")
                     else:
@@ -111,18 +118,25 @@ def login_dialog():
 @st.dialog("Sign up")
 def signup_dialog():
     st.caption("Your request will be reviewed by an administrator")
-    name = st.text_input("Full name")
-    email = st.text_input("Email")
-    organization = st.text_input("Organization")
-    password = st.text_input("Password", type="password")
-    reason = st.text_area("Reason for access", height=80)
+    # dentro un form i valori arrivano tutti insieme quando premi "Send request"
+    with st.form("signup_form", border=False):
+        name = st.text_input("Full name").strip()
+        email = st.text_input("Email").strip()
+        organization = st.text_input("Organization").strip()
+        password = st.text_input("Password", type="password")
+        reason = st.text_area("Reason for access", height=80).strip()
 
-    b_cancel, b_send, _ = st.columns([1, 1.5, 1.5])
-    if b_cancel.button("Cancel", use_container_width=True):
+        b_cancel, b_send, _ = st.columns([1, 1.5, 1.5])
+        annulla = b_cancel.form_submit_button("Cancel", use_container_width=True)
+        invia = b_send.form_submit_button("Send request", type="primary", use_container_width=True)
+
+    if annulla:
         st.rerun()
-    if b_send.button("Send request", type="primary", use_container_width=True):
-        if not name or not email or not password:
-            st.warning("Please fill in name, email and password")
+    if invia:
+        mancanti = [n for n, v in [("name", name), ("email", email), ("organization", organization),
+                                   ("password", password), ("reason", reason)] if not v]
+        if mancanti:
+            st.warning("Please fill in: " + ", ".join(mancanti))
         else:
             payload = {
                 "name": name,

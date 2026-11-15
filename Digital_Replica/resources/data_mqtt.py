@@ -9,6 +9,7 @@ import paho.mqtt.client as mqtt
 from database import db_instance
 import datetime
 from services.data_service import valida_dati
+import security
 from security import check_key
 import os
 
@@ -29,6 +30,8 @@ def set_data():
 
     if not id_dispositivo or not sender_id:
         return jsonify({"status": "Errore: Mancano id o sender_id"}), 400
+    if not security.is_my_dr(sender_id):
+        return jsonify({"status": f"Error: this port belongs to Digital Replica {security.DR_ID}"}), 403
 
     # connessione al DB
     db, config = db_instance.get_connection()

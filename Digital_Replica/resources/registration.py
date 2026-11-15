@@ -72,11 +72,11 @@ def registration_pf():
             ),
             409,
         )
-    if db_instance.get_profile_by_collection(collections_name):
+    if db_instance.get_profile_by_collection(collections_name, profile_data.get("owner")):
         return (
             jsonify(
                 {
-                    "State": f"Error: collection '{collections_name}' is already used by another Digital Replica"
+                    "State": f"Error: you already have a Digital Replica called '{collections_name}'"
                 }
             ),
             409,

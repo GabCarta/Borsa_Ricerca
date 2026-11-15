@@ -49,6 +49,7 @@ pagine = [
     st.Page("pages/3_Send_Data.py"),
     st.Page("pages/4_Gestione_Chiavi.py"),
     st.Page("pages/4_Get_Data.py"),
+    st.Page("pages/5_Public_DTs.py"),
     st.Page("pages/New_Digital_Replica.py"),
     # pagine admin
     st.Page("Admin_panel/1_Overview.py"),

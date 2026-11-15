@@ -1,6 +1,10 @@
 .venv/
 venv/
+myvenv/
 __pycache__/
 *.pyc
 .env
 *.zip
+gestione/kubeconfig/
+gestione/log/
+Microsoft VS Code/

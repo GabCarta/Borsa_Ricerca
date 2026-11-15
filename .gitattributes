@@ -1,0 +1,2 @@
+# gli script bash devono restare con fine riga Linux anche se il repo passa da Windows
+*.sh text eol=lf

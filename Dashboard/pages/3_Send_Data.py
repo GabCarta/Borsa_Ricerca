@@ -4,7 +4,7 @@ che permette di inviare telemetrie ai dispositivi registrati"""
 # PAGINA USATA PER PROVA, NON PIù IN USO
 import streamlit as st
 import requests
-from indirizzi import AUTH_URL, FACTORY_URL, dr_url
+from indirizzi import choose_dt_dr, user_dts
 import os
 
 
@@ -19,21 +19,19 @@ st.markdown(
 
 user_email = st.session_state["user_email"]
 try:
-    res_dts = requests.get(f"{FACTORY_URL}/api/user_dt?email={user_email}")
-    if res_dts.status_code == 200:
-        dts = res_dts.json().get("dts", [])
-
-        if not dts:
-            st.info("You have not assembled any Digital Twins yet. Create one below!")
-            if st.button("Create a Digital Twin", type="primary"):
-                st.switch_page("pages/1_Create_DT.py")
-            st.stop()
+    dts = user_dts()
 except Exception:
-    st.error("Error connecting to the central database for reading DTs.")
+    st.error("Error connecting to DT_factory for reading DTs.")
+    st.stop()
+if not dts:
+    st.info("You have not assembled any Digital Twins yet. Create one below!")
+    if st.button("Create a Digital Twin", type="primary"):
+        st.switch_page("pages/1_Create_DT.py")
     st.stop()
 st.sidebar.markdown("###  DT  Management")
 st.sidebar.page_link("welcome_page.py", label="Home")
 st.sidebar.page_link("pages/1_My_DTs.py", label="My DTs")
+st.sidebar.page_link("pages/5_Public_DTs.py", label="Public DTs")
 st.sidebar.page_link("pages/1_Create_DT.py", label="Create DT")
 st.sidebar.page_link("pages/3_Ricerca_DR_associate.py", label="Ricerca DR associate")
 st.sidebar.page_link("pages/4_Gestione_Chiavi.py", label="Gestione Chiavi")
@@ -59,26 +57,14 @@ with st.container(border=True):
     st.subheader("1. Authentication")
     col1, col2 = st.columns(2)
 
-    try:
-        res_rep = requests.get(f"{AUTH_URL}/api/user_replicas?email={user_email}")
-        repliche = (
-            res_rep.json().get("replicas", []) if res_rep.status_code == 200 else []
-        )
-    except Exception:
-        repliche = []
-    if not repliche:
-        st.warning("You have no registered Digital Replicas.")
-        st.stop()
-
-    opzioni_dr = {f"{r.get('name')} ({r.get('device_id')})": r for r in repliche}
-    scelta_dr = col1.selectbox("Digital Replica", list(opzioni_dr.keys()))
-    dr_scelta = opzioni_dr[scelta_dr]
-    sender_id = dr_scelta.get("device_id")
-    security_key = col2.text_input("Security Key", type="password")
+    # DT e DR: i dati vanno alla porta di quella DR nel pod di quel DT
+    dt_scelto, dr_scelta = choose_dt_dr((col1, col2))
+    sender_id = dr_scelta["dr_id"]
+    security_key = st.text_input("Security Key", type="password")
 
     st.subheader("2. Target")
 
-    device_id = dr_scelta.get("collezione", "")
+    device_id = dr_scelta.get("collection", "")
     st.text_input("Collection Name", value=device_id, disabled=True)
 
     st.subheader("3. Payload building")
@@ -131,7 +117,7 @@ if submit_btn:
 
         try:
             risposta = requests.post(
-                f"{dr_url(user_email, sender_id)}/api/sendData", json=payload
+                f"{dr_scelta['url']}/api/sendData", json=payload
             )
             if risposta.status_code == 200:
                 st.success(" Data sent successfully!")

@@ -2,7 +2,7 @@
 
 import streamlit as st
 import requests
-from indirizzi import AUTH_URL, FACTORY_URL
+from indirizzi import AUTH_URL, DR_REG_URL
 import uuid
 import os
 
@@ -274,7 +274,7 @@ if create:
                 },
             }
 
-            API_URL = f"{FACTORY_URL}/api/registration"  # la registrazione ora la fa la factory
+            API_URL = f"{DR_REG_URL}/api/registration"  # dr-registration, fuori dal cluster
             try:
                 risposta = requests.post(API_URL, json=payload_registrazione)
                 if risposta.status_code == 200:

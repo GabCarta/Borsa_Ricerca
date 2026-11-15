@@ -10,6 +10,7 @@ st.markdown("""<style>[data-testid="stSidebarNav"] {display: none;}</style>""", 
 st.sidebar.markdown("###  DT  Management")
 st.sidebar.page_link("app.py", label="Home")
 st.sidebar.page_link("pages/1_My_DTs.py", label="My DTs") 
+st.sidebar.page_link("pages/5_Public_DTs.py", label="Public DTs")
 st.sidebar.page_link("pages/1_Create_DT.py", label="Create DT") 
 st.sidebar.page_link("pages/2_Service.py", label="Service")
 st.sidebar.page_link("pages/4_Gestione_Chiavi.py", label="Gestione Chiavi")

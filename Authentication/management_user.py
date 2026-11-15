@@ -6,6 +6,7 @@ dei dispositivi associati all'utente.
 from flask import Flask, request, jsonify
 from pymongo import MongoClient
 import os
+from auth_token import create_token
 
 app = Flask(__name__)
 
@@ -93,6 +94,9 @@ def login():
                     "message": "Admin access granted",
                     "name": "Administrator",
                     "role": "admin",
+                    "user_id": "admin",
+                    # token firmato da mandare alla factory (Authorization: Bearer ...)
+                    "token": create_token("admin", email, "Administrator", "admin"),
                 }
             ),
             200,
@@ -102,7 +106,19 @@ def login():
         user = db.User.find_one({"email": email})
         if not user or user["password"] != password:
             return jsonify({"error": "Email or password incorrect"}), 401
-        return jsonify({"message": "Access granted", "name": user["name"]}), 200
+        user_id = str(user["_id"])  # da qui la factory ricava il namespace user-<id>
+        return (
+            jsonify(
+                {
+                    "message": "Access granted",
+                    "name": user["name"],
+                    "role": "user",
+                    "user_id": user_id,
+                    "token": create_token(user_id, email, user["name"], "user"),
+                }
+            ),
+            200,
+        )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

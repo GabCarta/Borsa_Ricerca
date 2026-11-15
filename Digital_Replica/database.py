@@ -6,6 +6,28 @@ per leggere/scrivere dati.
 
 import pymongo
 import os
+import json
+
+# Modalita' DT: il container gira nel pod di un DT e rappresenta una sola DR.
+# La factory gli passa DR_ID, il profilo (file della ConfigMap) e la chiave (Secret).
+# Senza DR_ID il container e' dr-registration, fuori dal cluster, sul Mongo della piattaforma.
+DR_ID = os.environ.get("DR_ID")
+PROFILE_FILE = os.environ.get("PROFILE_FILE")
+SECURITY_KEY = os.environ.get("SECURITY_KEY")
+
+
+def dt_mode():
+    return bool(DR_ID)
+
+
+# profilo della DR letto dal file montato dalla ConfigMap (solo modalita' DT)
+def load_dt_profile():
+    if not PROFILE_FILE:
+        return None
+    with open(PROFILE_FILE, "r", encoding="utf-8") as f:
+        profilo = json.load(f)
+    profilo["security_key"] = (SECURITY_KEY or "").strip()
+    return profilo
 
 
 class DB_connection:
@@ -79,17 +101,25 @@ class DB_connection:
 
     # restituisce il profilo di UNA DR cercandolo per id (None se non esiste)
     def get_profile(self, dr_id):
+        # nel pod del DT il container conosce solo la sua DR, e non legge il db della piattaforma
+        if dt_mode():
+            if dr_id != DR_ID:
+                return None
+            return load_dt_profile()
         db, _ = self.get_connection()
         if db is None or not dr_id:
             return None
         return db["registered_devices"].find_one({"id": dr_id}, {"_id": 0})
 
-    # restituisce il profilo della DR che scrive in quella collezione
-    def get_profile_by_collection(self, collection):
+    # restituisce il profilo della DR dello stesso proprietario che scrive in quella collezione
+    # (utenti diversi possono avere DR con lo stesso nome: ogni DT ha il suo db)
+    def get_profile_by_collection(self, collection, owner=None):
         db, _ = self.get_connection()
         if db is None or not collection:
             return None
-        return db["registered_devices"].find_one({"collection": collection}, {"_id": 0})
+        return db["registered_devices"].find_one(
+            {"collection": collection, "owner": owner}, {"_id": 0}
+        )
 
     # funzione per la creazione delle collection
     def create_collections(self):
