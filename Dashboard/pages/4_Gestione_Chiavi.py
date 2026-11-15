@@ -8,7 +8,7 @@ if 'logged_in' not in st.session_state or not st.session_state['logged_in']:
 st.markdown("""<style>[data-testid="stSidebarNav"] {display: none;}</style>""", unsafe_allow_html=True)
 # menu about the Digital Twin
 st.sidebar.markdown("###  DT  Management")
-st.sidebar.page_link("app.py", label="Home")
+st.sidebar.page_link("welcome_page.py", label="Home")
 st.sidebar.page_link("pages/1_Create_DT.py", label="Create DT") # Sostituisci col nome esatto del tuo file
 st.sidebar.page_link("pages/2_Service.py", label="Service")
 st.sidebar.page_link("pages/3_Ricerca_DR_associate.py", label="Ricerca DR associate")

@@ -1,0 +1,9 @@
+# tema della dashboard: vale per tutte le pagine
+# (streamlit lo legge da Dashboard/.streamlit/config.toml, quindi va lanciato dalla cartella Dashboard)
+[theme]
+base = "light"
+primaryColor = "#4F46E5"            # indaco, lo stesso ACCENT delle pagine
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F4F5FA" # sfondo della sidebar
+textColor = "#1F2937"
+font = "sans serif"

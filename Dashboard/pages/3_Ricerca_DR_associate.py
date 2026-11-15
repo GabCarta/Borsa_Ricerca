@@ -8,7 +8,7 @@ if 'logged_in' not in st.session_state or not st.session_state['logged_in']:
 st.markdown("""<style>[data-testid="stSidebarNav"] {display: none;}</style>""", unsafe_allow_html=True)
 
 st.sidebar.markdown("###  DT  Management")
-st.sidebar.page_link("app.py", label="Home")
+st.sidebar.page_link("welcome_page.py", label="Home")
 st.sidebar.page_link("pages/1_My_DTs.py", label="My DTs") 
 st.sidebar.page_link("pages/5_Public_DTs.py", label="Public DTs")
 st.sidebar.page_link("pages/1_Create_DT.py", label="Create DT") 
