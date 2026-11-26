@@ -46,13 +46,16 @@ def log(testo):
 
 
 def etichetta(inp):
+    if inp is None:
+        return "external"  # servizio senza input (es. external_ping)
     return f"{inp['dr_id']}.{inp['parameter']}"
 
 
 def un_ciclo():
     risultato = {}
     errori = []
-    for inp in INPUTS:
+    # un servizio senza input (es. external_ping) gira una volta per ciclo con inp=None
+    for inp in INPUTS or [None]:
         try:
             r = funzione(db, inp, PARAMS, INSTANCE_ID)
             if r is not None:

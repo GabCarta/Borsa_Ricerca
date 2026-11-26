@@ -1,4 +1,8 @@
 import datetime
+import time
+import urllib.error
+import urllib.request
+
 import numpy as np
 
 # Le chiama main.py nel ciclo, che poi salva il dict in service_output.
@@ -85,9 +89,38 @@ def prediction(db, inp, params, instance_id):
     }
 
 
+def external_ping(db, inp, params, instance_id):
+    # Non legge le DR: fa una richiesta HTTP GET a un sito esterno (es. google)
+    # e dice se ha risposto e in quanto tempo. Usa urllib, che e' gia' in Python:
+    # nessuna libreria in piu'. Qui inp e' None, perche' il servizio non ha input.
+    url = str(params["url"])
+    timeout = float(params["timeout"])
+    inizio = time.monotonic()
+    try:
+        richiesta = urllib.request.Request(url, headers={"User-Agent": "dt-ping"})
+        with urllib.request.urlopen(richiesta, timeout=timeout) as risposta:
+            codice = risposta.status
+        errore = None
+    except urllib.error.HTTPError as e:
+        # il sito ha risposto, anche se con un errore (es. 404): la rete funziona
+        codice, errore = e.code, None
+    except Exception as e:
+        # nessuna risposta: DNS non trovato, timeout, rete assente...
+        codice, errore = None, str(e)
+    ms = round((time.monotonic() - inizio) * 1000, 1)
+    return {
+        "url": url,
+        "online": codice is not None,
+        "status_code": codice,
+        "response_ms": ms if codice is not None else None,
+        "error": errore,
+    }
+
+
 SERVIZI = {
     "threshold_check": threshold_check,
     "min_max": min_max,
     "average": average,
     "prediction": prediction,
+    "external_ping": external_ping,
 }

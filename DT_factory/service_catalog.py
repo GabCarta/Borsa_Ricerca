@@ -44,6 +44,17 @@ CATALOGO = {
             INTERVALLO,
         ],
     },
+    "external_ping": {
+        "name": "External ping",
+        "description": "Calls an external site (HTTP GET) to check that the DT can reach the internet",
+        "min_inputs": 0,
+        "params": [
+            {"name": "url", "type": "str", "default": "https://www.google.com", "label": "URL to call"},
+            {"name": "timeout", "type": "float", "default": 5, "min": 1, "label": "Timeout (s)"},
+            {"name": "interval", "type": "int", "default": 60, "min": 1,
+             "label": "Interval between two runs (s)"},
+        ],
+    },
 }
 
 
@@ -60,6 +71,15 @@ def check_params(service_id, ricevuti):
     params = {}
     for p in voce["params"]:
         valore = ricevuti.get(p["name"], p["default"])
+        if p["type"] == "str":
+            # parametro di testo (es. l'URL del ping)
+            valore = str(valore).strip()
+            if not valore:
+                return None, f"{p['name']} cannot be empty"
+            if p["name"] == "url" and not valore.startswith(("http://", "https://")):
+                return None, "url must start with http:// or https://"
+            params[p["name"]] = valore
+            continue
         try:
             valore = int(valore) if p["type"] == "int" else float(valore)
         except (TypeError, ValueError):

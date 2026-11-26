@@ -123,14 +123,19 @@ def add_service(service_id):
     voce = catalogo[service_id]
     st.caption(voce.get("description", ""))
     nome = st.text_input("Name in the DT", value=voce["name"])
-    st.markdown("**Input data** (parameters of the DRs of this DT)")
-    scelti = st.multiselect("Selected inputs", list(input_possibili.keys()))
+    if voce.get("min_inputs", 0) > 0:
+        st.markdown("**Input data** (parameters of the DRs of this DT)")
+        scelti = st.multiselect("Selected inputs", list(input_possibili.keys()))
+    else:
+        scelti = []  # servizio che non legge le DR (es. External ping)
     st.markdown("**Service parameters**")
     params = {}
     for p in voce["params"]:
         if p["type"] == "int":
             params[p["name"]] = int(st.number_input(
                 p["label"], value=int(p["default"]), min_value=int(p.get("min", 0)), step=1))
+        elif p["type"] == "str":
+            params[p["name"]] = st.text_input(p["label"], value=str(p["default"]))
         else:
             params[p["name"]] = st.number_input(p["label"], value=float(p["default"]))
     if st.button("Add", type="primary"):
