@@ -3,7 +3,10 @@ Container di un'istanza di servizio nel pod del DT.
 
 - Configurazione: file JSON montato dalla ConfigMap del DT (CONFIG_FILE), scritto dalla factory:
   {"instance_id", "service_id", "name", "interval", "params": {...},
-   "inputs": [{"dr_id", "parameter", "collection"}, ...]}
+   "inputs": [{"dr_id", "parameter", "collection"}, ...], "code_file"?}
+- Funzione: quella predefinita di default_service.py con il nome service_id, oppure,
+  per un servizio proposto da un utente e approvato dall'admin, la funzione run() del file
+  code_file (stessa ConfigMap). Cosi' un servizio nuovo non richiede di ricostruire l'immagine.
 - Dati: legge e scrive solo nel db interno del DT (DATABASE_URL = localhost:27017),
   e solo le misure degli input assegnati a questa istanza.
 - API HTTP sulla porta PORT. La porta non e' esposta fuori dal cluster (Service ClusterIP):
@@ -12,6 +15,7 @@ Container di un'istanza di servizio nel pod del DT.
 
 import collections
 import datetime
+import importlib.util
 import json
 import os
 import threading
@@ -31,8 +35,9 @@ INPUTS = CONFIG.get("inputs", [])
 PARAMS = CONFIG.get("params", {})
 INTERVAL = int(CONFIG.get("interval", 10))
 
+CODE_FILE = CONFIG.get("code_file")
+
 db = MongoClient(os.environ["DATABASE_URL"], serverSelectionTimeoutMS=5000).get_database()
-funzione = SERVIZI[SERVICE_ID]
 
 # stato del ciclo, letto dalle API
 stato = {"running": True, "last_run": None, "last_error": None, "cycles": 0}
@@ -43,6 +48,36 @@ def log(testo):
     riga = f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {testo}"
     log_righe.append(riga)
     print(riga, flush=True)
+
+
+def carica_codice_utente(percorso):
+    # importa il file del servizio dell'utente e restituisce la sua funzione run
+    spec = importlib.util.spec_from_file_location("user_service", percorso)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo.run
+
+
+def in_bson(valore):
+    # il risultato di un servizio utente puo' avere tipi numpy o date: li rendo salvabili
+    def converti(o):
+        if hasattr(o, "item"):
+            return o.item()  # numpy.float64, numpy.int64, ...
+        return str(o)
+    return json.loads(json.dumps(valore, default=converti))
+
+
+if CODE_FILE:
+    try:
+        funzione = carica_codice_utente(CODE_FILE)
+    except Exception as e:
+        # il container resta su: l'errore si legge da /api/status e /api/logs
+        funzione = None
+        stato["running"] = False
+        stato["last_error"] = f"user code not loaded: {e}"
+        log(stato["last_error"])
+else:
+    funzione = SERVIZI[SERVICE_ID]
 
 
 def etichetta(inp):
@@ -58,6 +93,10 @@ def un_ciclo():
     for inp in INPUTS or [None]:
         try:
             r = funzione(db, inp, PARAMS, INSTANCE_ID)
+            if r is not None and CODE_FILE:
+                if not isinstance(r, dict):
+                    raise TypeError(f"run() must return a dict or None, not {type(r).__name__}")
+                r = in_bson(r)
             if r is not None:
                 risultato[etichetta(inp)] = r
         except Exception as e:
@@ -112,6 +151,8 @@ def status():
 
 @app.route("/api/start", methods=["POST"])
 def start():
+    if funzione is None:
+        return jsonify({"error": stato["last_error"]}), 409
     stato["running"] = True
     log("loop started from the API")
     return jsonify({"running": True}), 200

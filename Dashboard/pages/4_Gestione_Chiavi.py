@@ -10,6 +10,7 @@ st.markdown("""<style>[data-testid="stSidebarNav"] {display: none;}</style>""", 
 st.sidebar.markdown("###  DT  Management")
 st.sidebar.page_link("app.py", label="Home")
 st.sidebar.page_link("pages/1_Create_DT.py", label="Create DT") # Sostituisci col nome esatto del tuo file
+st.sidebar.page_link("pages/6_Request_service.py", label="Request service")
 st.sidebar.page_link("pages/2_Service.py", label="Service")
 st.sidebar.page_link("pages/3_Ricerca_DR_associate.py", label="Ricerca DR associate")
 st.sidebar.page_link("pages/4_Gestione_Chiavi.py", label="Gestione Chiavi")
@@ -50,4 +51,4 @@ with st.spinner("Retrieving keys from the database..."):
             st.error(f"API Error ({r.status_code}): Make sure you have rebuilt the 'authentication' container.")
             
     except Exception as e:
-        st.error(" Unable to connect to the central database to read the keys.")
+        st.error(" Unable to connect to the central database to read the keys.")

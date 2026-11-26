@@ -14,10 +14,29 @@ from management_dt import (
     stop_dt,
 )
 from service_catalog import get_catalog
+from service_requests import (
+    admin_catalog,
+    check_service,
+    create_request,
+    delete_request,
+    get_template,
+    list_requests,
+    review_request,
+    set_service_active,
+)
 
 app = Flask(__name__)
 
 app.add_url_rule("/api/service_catalog", view_func=get_catalog, methods=["GET"])
+# servizi proposti dagli utenti (service_requests.py)
+app.add_url_rule("/api/service_template", view_func=get_template, methods=["GET"])
+app.add_url_rule("/api/service_requests/check", view_func=check_service, methods=["POST"])
+app.add_url_rule("/api/service_requests", view_func=create_request, methods=["POST"])
+app.add_url_rule("/api/service_requests", view_func=list_requests, methods=["GET"])
+app.add_url_rule("/api/service_requests/<request_id>", view_func=delete_request, methods=["DELETE"])
+app.add_url_rule("/api/service_requests/<request_id>/review", view_func=review_request, methods=["POST"])
+app.add_url_rule("/api/admin/service_catalog", view_func=admin_catalog, methods=["GET"])
+app.add_url_rule("/api/admin/service_catalog/<service_id>", view_func=set_service_active, methods=["PUT"])
 app.add_url_rule("/api/create_dt", view_func=create_dt, methods=["POST"])
 app.add_url_rule("/api/user_dt", view_func=get_user_dts, methods=["GET"])
 app.add_url_rule("/api/dt/<dt_id>", view_func=get_dt, methods=["GET"])

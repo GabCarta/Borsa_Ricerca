@@ -1,10 +1,17 @@
 """
-Catalogo dei servizi predefiniti (quelli dentro l'immagine gcrta29/service).
+Catalogo dei servizi.
+- Predefiniti: quelli dentro l'immagine gcrta29/service (CATALOGO qui sotto).
+- Degli utenti: proposti con una richiesta e approvati dall'admin (service_requests.py),
+  salvati nella collection service_catalog del db Digital_Twin insieme al loro codice.
+  Il codice va nella ConfigMap del DT e lo carica l'immagine del servizio, senza rebuild.
 Per ogni servizio: quanti input vuole e quali parametri si possono impostare alla creazione.
 La dashboard costruisce la finestra di configurazione da qui (GET /api/service_catalog).
 """
 
+import os
+
 from flask import jsonify
+from pymongo import MongoClient
 
 INTERVALLO = {"name": "interval", "type": "int", "default": 10, "min": 1,
               "label": "Interval between two runs (s)"}
@@ -58,13 +65,38 @@ CATALOGO = {
 }
 
 
+_client = None
+
+
+def catalog_db():
+    # collection con i servizi approvati (stesso db della factory: Digital_Twin)
+    global _client
+    if _client is None:
+        _client = MongoClient(os.environ["DATABASE_URL"], serverSelectionTimeoutMS=5000)
+    return _client["Digital_Twin"].service_catalog
+
+
+def full_catalog(with_code=False, only_active=True):
+    # predefiniti + approvati dall'admin. Se il db non risponde restano i predefiniti
+    servizi = {k: {**v, "builtin": True} for k, v in CATALOGO.items()}
+    filtro = {"active": True} if only_active else {}
+    proiezione = {"_id": 0} if with_code else {"_id": 0, "code": 0}
+    try:
+        for voce in catalog_db().find(filtro, proiezione).sort("approved_at", 1):
+            servizi[voce["service_id"]] = {**voce, "builtin": False}
+    except Exception as e:
+        print(f"service_catalog not readable: {e}", flush=True)
+    return servizi
+
+
 def get_catalog():
-    return jsonify({"services": CATALOGO}), 200
+    return jsonify({"services": full_catalog()}), 200
 
 
-# controlla e completa i parametri di un'istanza: restituisce (params, errore)
-def check_params(service_id, ricevuti):
-    voce = CATALOGO.get(service_id)
+# controlla e completa i parametri di un'istanza: restituisce (params, errore).
+# voce: la voce del catalogo gia' letta (altrimenti la cerco qui)
+def check_params(service_id, ricevuti, voce=None):
+    voce = voce or full_catalog().get(service_id)
     if not voce:
         return None, f"unknown service '{service_id}'"
     ricevuti = ricevuti or {}

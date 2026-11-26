@@ -15,6 +15,7 @@ from pymongo import MongoClient
 
 from auth_token import read_token
 from k3s_dt import (
+    CONFIG_DIR,
     container_logs,
     delete_digital_twin,
     delete_namespace,
@@ -30,7 +31,7 @@ from k3s_dt import (
     spawn_digital_twin,
 )
 from kubernetes.client.exceptions import ApiException
-from service_catalog import CATALOGO, check_params
+from service_catalog import check_params, full_catalog
 
 # indirizzo a cui sono raggiungibili le NodePort dei DT (IP della VM con K3s)
 DT_PUBLIC_HOST = os.environ.get("DT_PUBLIC_HOST", "localhost")
@@ -171,13 +172,16 @@ def prepara_drs(richieste, email):
 
 def prepara_servizi(richieste, drs):
     per_id = {d["dr_id"]: d for d in drs}
+    # con il codice: i servizi degli utenti lo portano nella ConfigMap del DT
+    catalogo = full_catalog(with_code=True) if richieste else {}
     servizi = []
     for i, s in enumerate(richieste):
         service_id = s.get("service_id")
-        params, errore = check_params(service_id, s.get("params"))
+        voce = catalogo.get(service_id)
+        params, errore = check_params(service_id, s.get("params"), voce)
         if errore:
             return None, f"Service {i + 1}: {errore}"
-        nome = (s.get("name") or CATALOGO[service_id]["name"]).strip()
+        nome = (s.get("name") or voce["name"]).strip()
 
         inputs = []
         for inp in s.get("inputs") or []:
@@ -187,32 +191,42 @@ def prepara_servizi(richieste, drs):
                 return None, f"'{nome}': input DR {inp.get('dr_id')} is not in this Digital Twin"
             if dr["parameters"].get(par) not in TIPI_NUMERICI:
                 return None, f"'{nome}': {par} is not a numeric parameter of {dr['dr_name']}"
+            # servizio che lavora solo su certi parametri (SERVICE["parameters"] del suo autore)
+            if voce.get("parameters") and par not in voce["parameters"]:
+                return None, f"'{nome}' works only on: {', '.join(voce['parameters'])}"
             inputs.append({"dr_id": dr["dr_id"], "parameter": par, "collection": dr["collection"]})
-        if len(inputs) < CATALOGO[service_id]["min_inputs"]:
-            return None, f"'{nome}': choose at least {CATALOGO[service_id]['min_inputs']} input"
+        if len(inputs) < voce["min_inputs"]:
+            return None, f"'{nome}': choose at least {voce['min_inputs']} input"
 
         # id unico nel DT: nome del container, configurazione e risultati
         instance_id = f"svc-{i + 1}"
         intervallo = params.pop("interval")
-        servizi.append(
-            {
-                "instance_id": instance_id,
-                "service_id": service_id,
-                "name": nome,
-                "inputs": inputs,
-                "params": params,
-                "interval": intervallo,
-                "port": porta_servizio(i),
-                "config": {
-                    "instance_id": instance_id,
-                    "service_id": service_id,
-                    "name": nome,
-                    "interval": intervallo,
-                    "params": params,
-                    "inputs": inputs,
-                },
-            }
-        )
+        config = {
+            "instance_id": instance_id,
+            "service_id": service_id,
+            "name": nome,
+            "interval": intervallo,
+            "params": params,
+            "inputs": inputs,
+        }
+        servizio = {
+            "instance_id": instance_id,
+            "service_id": service_id,
+            "name": nome,
+            "inputs": inputs,
+            "params": params,
+            "interval": intervallo,
+            "port": porta_servizio(i),
+            "config": config,
+        }
+        if not voce.get("builtin"):
+            # servizio di un utente: il codice approvato va nella ConfigMap accanto alla
+            # configurazione e main.py lo carica da li'. Il DT tiene la versione approvata
+            # anche se l'admin poi modifica o disattiva il servizio nel catalogo.
+            servizio["code"] = voce["code"]
+            servizio["version"] = voce.get("approved_at")
+            config["code_file"] = f"{CONFIG_DIR}/{instance_id}.py"
+        servizi.append(servizio)
     return servizi, None
 
 
@@ -280,7 +294,8 @@ def create_dt():
         ],
         # i servizi non hanno un indirizzo pubblico: la factory li chiama tramite K3s
         "services": [
-            {k: s[k] for k in ("instance_id", "service_id", "name", "inputs", "params", "interval", "port")}
+            {k: s[k] for k in ("instance_id", "service_id", "name", "inputs", "params", "interval", "port", "version")
+             if k in s}
             for s in services
         ],
     }

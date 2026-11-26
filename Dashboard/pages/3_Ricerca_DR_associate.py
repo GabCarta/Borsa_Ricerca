@@ -12,6 +12,7 @@ st.sidebar.page_link("app.py", label="Home")
 st.sidebar.page_link("pages/1_My_DTs.py", label="My DTs") 
 st.sidebar.page_link("pages/5_Public_DTs.py", label="Public DTs")
 st.sidebar.page_link("pages/1_Create_DT.py", label="Create DT") 
+st.sidebar.page_link("pages/6_Request_service.py", label="Request service")
 st.sidebar.page_link("pages/2_Service.py", label="Service")
 st.sidebar.page_link("pages/4_Gestione_Chiavi.py", label="Gestione Chiavi")
 st.sidebar.page_link("pages/3_Send_Data.py", label="Send Data(HTTP)")
@@ -51,4 +52,4 @@ with st.spinner("Searching..."):
         else:
             st.error(f"API Error ({r.status_code}): Make sure you have rebuilt the 'authentication' container.")
     except Exception:
-        st.error(" Unable to connect to the central database to read the collections.")
+        st.error(" Unable to connect to the central database to read the collections.")

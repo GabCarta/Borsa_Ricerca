@@ -189,7 +189,8 @@ def _owner(deployment):
 def spawn_digital_twin(namespace, pod_name, drs, services):
     """
     drs      = [{"dr_id", "port", "profile": {...}, "security_key"}, ...]   una DR = un container
-    services = [{"instance_id", "service_id", "port", "config": {...}}, ...] un'istanza = un container
+    services = [{"instance_id", "service_id", "port", "config": {...}, "code"?}, ...] un'istanza = un container
+               ("code" solo per i servizi degli utenti: finisce nella ConfigMap come <instance_id>.py)
     Crea Deployment, Secret, ConfigMap, PVC e due Service:
     - <pod_name>      NodePort, solo le porte delle DR (ricevono i dati da fuori);
     - <pod_name>-int  ClusterIP, le porte dei servizi: da fuori non si raggiungono,
@@ -238,6 +239,9 @@ def spawn_digital_twin(namespace, pod_name, drs, services):
         nome = srv["instance_id"]
         porta = srv["port"]
         config_files[f"{nome}.json"] = json.dumps(srv["config"])
+        if srv.get("code"):
+            # servizio di un utente: codice approvato dall'admin, letto da main.py (code_file)
+            config_files[f"{nome}.py"] = srv["code"]
         containers.append(
             client.V1Container(
                 name=nome,

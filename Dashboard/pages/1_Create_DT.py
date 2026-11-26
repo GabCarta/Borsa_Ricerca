@@ -18,6 +18,7 @@ st.sidebar.page_link("welcome_page.py", label="Home")
 st.sidebar.page_link("pages/1_My_DTs.py", label="My DTs")
 st.sidebar.page_link("pages/5_Public_DTs.py", label="Public DTs")
 st.sidebar.page_link("pages/1_Create_DT.py", label="Create DT")
+st.sidebar.page_link("pages/6_Request_service.py", label="Request service")
 st.sidebar.page_link("pages/3_Ricerca_DR_associate.py", label="Ricerca DR associate")
 st.sidebar.page_link("pages/4_Gestione_Chiavi.py", label="Gestione Chiavi")
 st.sidebar.divider()
@@ -125,7 +126,12 @@ def add_service(service_id):
     nome = st.text_input("Name in the DT", value=voce["name"])
     if voce.get("min_inputs", 0) > 0:
         st.markdown("**Input data** (parameters of the DRs of this DT)")
-        scelti = st.multiselect("Selected inputs", list(input_possibili.keys()))
+        # un servizio degli utenti puo' lavorare solo su certi parametri
+        ammessi = voce.get("parameters") or {}
+        opzioni = [k for k, v in input_possibili.items() if not ammessi or v["parameter"] in ammessi]
+        if ammessi:
+            st.caption(f"This service works on: {', '.join(ammessi)}")
+        scelti = st.multiselect("Selected inputs", opzioni)
     else:
         scelti = []  # servizio che non legge le DR (es. External ping)
     st.markdown("**Service parameters**")
@@ -161,7 +167,9 @@ with st.container(border=True):
         colonne = st.columns(2)
         for i, (service_id, voce) in enumerate(catalogo.items()):
             col = colonne[i % 2]
-            col.markdown(f"**{voce['name']}**  \n<span style='color:#6B7280'>{voce.get('description', '')}</span>",
+            # i servizi proposti dagli utenti e approvati dall'admin mostrano l'autore
+            autore = "" if voce.get("builtin", True) else f" · by {voce.get('author') or 'a user'}"
+            col.markdown(f"**{voce['name']}**  \n<span style='color:#6B7280'>{voce.get('description', '')}{autore}</span>",
                          unsafe_allow_html=True)
             if col.button("Add", key=f"add_{service_id}"):
                 add_service(service_id)
